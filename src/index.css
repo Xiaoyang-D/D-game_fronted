@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-primary: #9AD80D;
+  --color-primary-hover: #82BE00;
+  --color-cta: #17B3A3;
+  --color-cta-hover: #118E82;
+  --color-surface: #FFFFFF;
+  --color-muted: #F3F5EF;
+  --color-text: #1E2329;
+  --color-text-secondary: #687078;
+  --color-border: #E6E9DD;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background-color: var(--color-muted);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12px 12px, rgba(36, 40, 44, 0.045) 1.4px, transparent 1.4px),
+      linear-gradient(120deg, rgba(154, 216, 13, 0.07), transparent 28%),
+      linear-gradient(240deg, rgba(23, 179, 163, 0.06), transparent 30%),
+      #eef1ed;
+    background-size: 24px 24px, 100% 100%, 100% 100%, auto;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .dg-pattern {
+    background-image:
+      linear-gradient(30deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
+      linear-gradient(150deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
+      linear-gradient(30deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
+      linear-gradient(150deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
+      linear-gradient(60deg, rgba(30, 35, 41, 0.035) 25%, transparent 25.5%, transparent 75%, rgba(30, 35, 41, 0.035) 75%, rgba(30, 35, 41, 0.035)),
+      linear-gradient(60deg, rgba(30, 35, 41, 0.035) 25%, transparent 25.5%, transparent 75%, rgba(30, 35, 41, 0.035) 75%, rgba(30, 35, 41, 0.035));
+    background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+    background-size: 40px 70px;
+  }
+}
