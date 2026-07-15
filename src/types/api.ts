@@ -106,6 +106,119 @@ export interface PostResp {
   likeCount: number
   commentCount: number
   favoriteCount: number
+  collectionId?: Id | null
+  collectionName?: string | null
+  topics?: PostTopicResp[]
+  isOriginal?: boolean
+  containsAiGenerated?: boolean
+  scheduledPublishAt?: string | null
+  gmtCreate: string
+}
+
+export interface PostTopicResp {
+  id: Id
+  name: string
+}
+
+export interface PostCollectionResp {
+  id: Id
+  name: string
+}
+
+export interface PostDraftResp {
+  id: Id
+  boardId: Id | null
+  boardName: string | null
+  gameId: Id | null
+  gameName: string | null
+  title: string
+  content: string
+  status: number
+  isOriginal: boolean
+  containsAiGenerated: boolean
+  scheduledPublishAt: string | null
+  collectionId: Id | null
+  collectionName: string | null
+  topics: PostTopicResp[]
+  gmtModified: string
+}
+
+export type PostManageTab = 'published' | 'pending' | 'rejected' | 'draft'
+
+export interface PostManageItem {
+  id: Id
+  boardId: Id | null
+  boardName: string | null
+  gameId: Id | null
+  gameName: string | null
+  collectionId: Id | null
+  collectionName: string | null
+  title: string
+  content: string
+  /** 0 draft, 1 pending, 2 approved, 3 rejected. */
+  status: number
+  isOriginal: boolean
+  containsAiGenerated: boolean
+  topics: PostTopicResp[]
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  favoriteCount: number
+  scheduledPublishAt: string | null
+  gmtCreate: string
+  /** Last edit time; drafts use this timestamp in the management list. */
+  gmtModified: string
+}
+
+export interface PostManagePageResp {
+  publishedCount: number
+  pendingCount: number
+  rejectedCount: number
+  draftCount: number
+  page: number
+  size: number
+  total: number
+  records: PostManageItem[]
+}
+
+export interface UserProfileResp {
+  id: Id
+  nickname: string
+  avatarUrl: string | null
+  bio: string
+  gmtCreate: string
+  postCount: number
+  likeCount: number
+  followingCount: number
+  followerCount: number
+  favoriteCount: number
+  isSelf: boolean
+  isFollowing: boolean
+}
+
+export interface UserFavoriteResp {
+  targetType: number
+  targetId: Id
+  title: string
+  content: string | null
+  coverUrl: string | null
+  boardId: Id | null
+  boardName: string | null
+  gameId: Id | null
+  gameName: string | null
+  userId: Id | null
+  authorNickname: string | null
+  authorUsername: string | null
+  authorAvatarUrl: string | null
+  authorStatus: number | null
+  status: number | null
+  viewCount: number | null
+  likeCount: number | null
+  commentCount: number | null
+  favoriteCount: number | null
+  categoryName: string | null
+  avgRating: number | null
+  ratingCount: number | null
   gmtCreate: string
 }
 
@@ -122,10 +235,13 @@ export interface CommentResp {
   parentId: Id
   userId: Id
   userNickname: string
+  userAvatarUrl: string | null
   content: string
   likeCount: number
   gmtCreate: string
 }
+
+export type CommentSort = 'DEFAULT' | 'EARLIEST' | 'LATEST'
 
 export interface Notification {
   id: Id
@@ -199,6 +315,30 @@ export interface CreatePostReq {
   content: string
 }
 
+export interface PostDraftSaveReq {
+  boardId?: Id
+  gameId?: Id
+  title?: string
+  content?: string
+  topicNames?: string[]
+  collectionId?: Id
+  isOriginal?: boolean
+  containsAiGenerated?: boolean
+  scheduledPublishAt?: string
+}
+
+export interface PostPublishReq {
+  boardId: Id
+  gameId?: Id
+  title: string
+  content: string
+  topicNames?: string[]
+  collectionId?: Id
+  isOriginal?: boolean
+  containsAiGenerated?: boolean
+  scheduledPublishAt?: string
+}
+
 export interface CreateCommentReq {
   postId: Id
   parentId?: Id
@@ -208,6 +348,11 @@ export interface CreateCommentReq {
 export interface InteractionReq {
   targetType: number
   targetId: Id
+}
+
+export interface InteractionStatusResp {
+  liked: boolean
+  favorited: boolean
 }
 
 export interface RatingReq {
@@ -244,6 +389,7 @@ export interface GamesQuery {
 
 export interface PostsQuery {
   boardId?: Id
+  authorId?: Id
   gameId?: Id
   keyword?: string
   page?: number
@@ -282,6 +428,7 @@ export interface CommentsQuery {
   postId: Id
   page?: number
   size?: number
+  sort?: CommentSort
 }
 
 export interface NotificationsQuery {

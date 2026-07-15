@@ -34,7 +34,15 @@ export function GameDetailPage() {
     enabled: isValidId(gameId),
   })
 
-  const { liked, favorited, loading: interactionLoading, toggleLike, toggleFavorite } = useInteraction(
+  const {
+    liked,
+    favorited,
+    statusLoading,
+    likeLoading,
+    favoriteLoading,
+    toggleLike,
+    toggleFavorite,
+  } = useInteraction(
     TARGET_TYPE.GAME,
     gameId!,
   )
@@ -153,7 +161,7 @@ export function GameDetailPage() {
             <Button
               variant={liked ? 'primary' : 'outline'}
               onClick={toggleLike}
-              loading={interactionLoading}
+              loading={statusLoading || likeLoading}
             >
               <ThumbsUp className="h-4 w-4" />
               {liked ? '已点赞' : '点赞'}
@@ -161,7 +169,7 @@ export function GameDetailPage() {
             <Button
               variant={favorited ? 'primary' : 'outline'}
               onClick={toggleFavorite}
-              loading={interactionLoading}
+              loading={statusLoading || favoriteLoading}
             >
               <Heart className="h-4 w-4" />
               {favorited ? '已收藏' : '收藏'}

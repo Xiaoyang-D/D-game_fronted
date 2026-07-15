@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/layout/Layout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -16,7 +16,9 @@ import { GameDetailPage } from '@/pages/games/GameDetailPage'
 import { CommunityPage } from '@/pages/community/CommunityPage'
 import { PostDetailPage } from '@/pages/community/PostDetailPage'
 import { CreatePostPage } from '@/pages/community/CreatePostPage'
+import { PostManagementPage } from '@/pages/community/PostManagementPage'
 import { FollowingPage } from '@/pages/community/FollowingPage'
+import { UserProfilePage } from '@/pages/users/UserProfilePage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage'
 import { AdminHomePage } from '@/pages/admin/AdminHomePage'
@@ -68,6 +70,7 @@ export default function App() {
                 <Route path="community" element={<CommunityPage />} />
                 <Route path="search" element={<SearchPage />} />
                 <Route path="posts/:id" element={<PostDetailPage />} />
+                <Route path="users/:id" element={<UserProfilePage />} />
                 <Route path="following" element={<ProtectedRoute><FollowingPage /></ProtectedRoute>} />
                 <Route
                   path="posts/new"
@@ -77,6 +80,15 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="posts/manage"
+                  element={
+                    <ProtectedRoute>
+                      <PostManagementPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="posts/drafts" element={<Navigate to="/posts/manage?tab=draft" replace />} />
                 <Route
                   path="profile"
                   element={

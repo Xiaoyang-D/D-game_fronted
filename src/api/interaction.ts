@@ -1,5 +1,9 @@
 import api from './client'
-import type { Id, InteractionReq } from '@/types/api'
+import type { Id, InteractionReq, InteractionStatusResp } from '@/types/api'
+
+export async function getInteractionStatus(data: InteractionReq): Promise<InteractionStatusResp> {
+  return api.get<InteractionStatusResp>('/interactions/status', { params: data })
+}
 
 export async function like(data: InteractionReq): Promise<void> {
   await api.post<void>('/likes', data)

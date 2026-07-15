@@ -24,7 +24,7 @@
 ### 前置条件
 
 - Node.js 18+
-- 后端服务运行在 `http://localhost:8080`
+- 后端服务运行在 `http://127.0.0.1:8080`
 
 ### 安装与启动
 
@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:5173
+访问 http://127.0.0.1:5173
 
 ### 默认测试账号
 
@@ -59,8 +59,8 @@ src/
 
 开发环境通过 Vite 代理转发 API 请求：
 
-- `/api/*` → `http://localhost:8080`
-- `/files/*` → `http://localhost:8080`
+- `/api/*` → `http://127.0.0.1:8080`
+- `/files/*` → `http://127.0.0.1:8080`
 
 ## ID 处理约定
 

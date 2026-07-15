@@ -109,7 +109,7 @@ export function Navbar() {
                 </Link>
               )}
               <Link
-                to="/profile"
+                to={`/users/${user!.id}`}
                 className="ml-1 flex items-center gap-2 rounded-full bg-white/8 px-2 py-1.5 transition-colors duration-200 hover:bg-white/12 cursor-pointer"
               >
                 <Avatar src={user?.avatarUrl} size="sm" />
@@ -181,7 +181,7 @@ export function Navbar() {
                 <NavLink to="/notifications" onClick={() => setMobileOpen(false)} className="rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">
                   通知 {unreadCount > 0 && `(${unreadCount})`}
                 </NavLink>
-                <NavLink to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">
+                <NavLink to={`/users/${user!.id}`} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">
                   <User className="h-4 w-4" /> 个人中心
                 </NavLink>
                 {isAdmin() && (
