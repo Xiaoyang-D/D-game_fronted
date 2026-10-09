@@ -388,6 +388,7 @@ export interface GamesQuery {
 }
 
 export interface PostsQuery {
+  recommended?: boolean
   boardId?: Id
   authorId?: Id
   gameId?: Id
@@ -397,6 +398,9 @@ export interface PostsQuery {
 }
 
 export interface SearchQuery {
+  boardId?: Id
+  recommended?: boolean
+  gameId?: Id
   keyword: string
   type?: 'ALL' | 'GAME' | 'POST'
   page?: number

@@ -32,7 +32,6 @@ import { cn } from '@/lib/utils'
 import type { GameResp } from '@/types/api'
 
 const toolLinks = [
-  { to: '/games', label: '游戏库', icon: Gamepad2 },
   { to: '/community', label: '社区', icon: MessageSquare },
   { to: '/search', label: '搜索', icon: Search },
   { to: '/following', label: '关注流', icon: Users },
@@ -56,13 +55,13 @@ const defaultHeroSlides: HeroSlide[] = [
   {
     eyebrow: 'D-GAME COMMUNITY',
     title: '发现好游戏，分享游戏心得',
-    description: '浏览游戏库、参与讨论、发表攻略，把你的游戏经历沉淀成社区里的高光动态。',
+    description: '进入版区版区、参与讨论、发表攻略，把你的游戏经历沉淀成社区里的高光动态。',
     image: heroImage,
     imageAlt: 'D-Game',
     primaryLabel: '进入社区',
     primaryTo: '/community',
-    secondaryLabel: '浏览游戏库',
-    secondaryTo: '/games',
+    secondaryLabel: '进入版区版区',
+    secondaryTo: '/community',
   },
   {
     eyebrow: 'PLAYER FEED',
@@ -80,9 +79,9 @@ const defaultHeroSlides: HeroSlide[] = [
     title: '从评分与短评里挑下一款游戏',
     description: '游戏资料、玩家评价和相关讨论聚合在一起，快速找到值得投入时间的作品。',
     image: heroImage,
-    imageAlt: '游戏库',
-    primaryLabel: '浏览游戏',
-    primaryTo: '/games',
+    imageAlt: '游戏版区',
+    primaryLabel: '进入版区',
+    primaryTo: '/community',
     secondaryLabel: '搜索内容',
     secondaryTo: '/search',
   },
@@ -124,11 +123,11 @@ export function HomePage() {
               推荐
             </Link>
             <Link
-              to="/games"
+              to="/community"
               className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-bold text-text-secondary hover:bg-muted hover:text-text"
             >
               <Trophy className="h-5 w-5" />
-              游戏库
+              游戏版区
             </Link>
             <Link
               to="/community"
@@ -167,8 +166,8 @@ export function HomePage() {
           <Link to="/" className="shrink-0 rounded-full bg-[#2d2d2d] px-4 py-2 text-sm font-bold text-white">
             推荐
           </Link>
-          <Link to="/games" className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-text-secondary">
-            游戏库
+          <Link to="/community" className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-text-secondary">
+            游戏版区
           </Link>
           <Link to="/community" className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-text-secondary">
             社区
@@ -213,7 +212,7 @@ export function HomePage() {
             <h2 className="text-xl font-black text-text">
               最新游戏<span className="ml-1 text-sm text-border">GAMES_</span>
             </h2>
-            <Link to="/games" className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-hover">
+            <Link to="/community" className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-hover">
               查看全部 <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -264,7 +263,7 @@ export function HomePage() {
                 <PenSquare className="h-8 w-8 text-primary" />
                 发图文
               </Link>
-              <Link to="/games" className="flex flex-col items-center gap-2 rounded-md p-2 text-xs font-bold text-text-secondary hover:bg-muted hover:text-primary">
+              <Link to="/community" className="flex flex-col items-center gap-2 rounded-md p-2 text-xs font-bold text-text-secondary hover:bg-muted hover:text-primary">
                 <Image className="h-8 w-8 text-primary" />
                 发图集
               </Link>

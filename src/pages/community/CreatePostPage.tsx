@@ -54,13 +54,13 @@ export function CreatePostPage() {
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, isAdmin } = useAuthStore()
   const draftId = searchParams.get('draftId')
   const postId = searchParams.get('postId')
   const managedPostId = !draftId && isValidId(postId) ? postId : null
   const initialGameId = searchParams.get('gameId') || ''
 
-  const [boardId, setBoardId] = useState('')
+  const [boardId, setBoardId] = useState(searchParams.get('boardId') || '')
   const [gameId, setGameId] = useState(initialGameId)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -152,10 +152,10 @@ export function CreatePostPage() {
       queryClient.invalidateQueries({ queryKey: ['post-drafts'] })
       queryClient.invalidateQueries({ queryKey: ['post-management'] })
       if (scheduleEnabled) {
-        toast('定时发布已保存，将在审核队列中等待处理')
+        toast('定时发布已保存，到期后自动公开')
         navigate('/posts/manage?tab=draft')
       } else {
-        toast('帖子已提交，等待管理员审核')
+        toast('帖子已发布')
         navigate(`/posts/${postId}`)
       }
     },
@@ -167,8 +167,8 @@ export function CreatePostPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['post-management'] })
       queryClient.invalidateQueries({ queryKey: ['managed-post', managedPostId] })
-      toast('修改已提交，等待管理员审核')
-      navigate('/posts/manage?tab=pending')
+      toast('修改已保存，封禁状态不会因修改而解除')
+      navigate('/posts/manage')
     },
     onError: (error: Error) => toast(error.message, 'error'),
   })
@@ -191,8 +191,8 @@ export function CreatePostPage() {
   }
 
   const boardOptions = [
-    { value: '', label: '请选择版区' },
-    ...(boards?.map((board) => ({ value: String(board.id), label: board.name })) || []),
+    { value: '', label: '请选择分区' },
+    ...(boards?.filter((board) => board.name !== '官方' || isAdmin()).map((board) => ({ value: String(board.id), label: board.name })) || []),
   ]
   const gameOptions = [
     { value: '', label: '不关联游戏' },
@@ -372,7 +372,7 @@ export function CreatePostPage() {
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
-          <p className="text-xs text-text-secondary">{managedPostId ? '修改提交后将重新进入管理员审核，审核通过后公开展示。' : '发布后将进入管理员审核，审核通过后公开展示。'}</p>
+          <p className="text-xs text-text-secondary">{managedPostId ? '修改后自动公开，已封禁帖子仍需管理员解封。' : '发布后自动公开展示。'}</p>
           <div className="flex gap-3">
             {!managedPostId && <Button type="button" variant="outline" onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
               保存草稿

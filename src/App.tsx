@@ -11,9 +11,9 @@ import { useAuthStore } from '@/store/authStore'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { GamesPage } from '@/pages/games/GamesPage'
 import { GameDetailPage } from '@/pages/games/GameDetailPage'
 import { CommunityPage } from '@/pages/community/CommunityPage'
+import { SearchResultsPage } from '@/pages/search/SearchResultsPage'
 import { PostDetailPage } from '@/pages/community/PostDetailPage'
 import { CreatePostPage } from '@/pages/community/CreatePostPage'
 import { PostManagementPage } from '@/pages/community/PostManagementPage'
@@ -28,7 +28,8 @@ import { AdminBannedPostsPage } from '@/pages/admin/AdminBannedPostsPage'
 import { AdminAuditCommentPage } from '@/pages/admin/AdminAuditCommentPage'
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
-import { SearchPage } from '@/pages/search/SearchPage'
+import { AssistantProvider } from '@/components/assistant/AssistantProvider'
+import { AssistantPage } from '@/pages/assistant/AssistantPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,16 +60,18 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
-          <AppInitializer>
-            <Routes>
+          <AssistantProvider>
+            <AppInitializer>
+              <Routes>
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
-                <Route path="games" element={<GamesPage />} />
+                <Route path="games" element={<Navigate to="/community" replace />} />
                 <Route path="games/:id" element={<GameDetailPage />} />
                 <Route path="community" element={<CommunityPage />} />
-                <Route path="search" element={<SearchPage />} />
+                <Route path="search" element={<SearchResultsPage />} />
+                <Route path="assistant" element={<AssistantPage />} />
                 <Route path="posts/:id" element={<PostDetailPage />} />
                 <Route path="users/:id" element={<UserProfilePage />} />
                 <Route path="following" element={<ProtectedRoute><FollowingPage /></ProtectedRoute>} />
@@ -122,8 +125,9 @@ export default function App() {
                   <Route path="reports" element={<AdminReportsPage />} />
                 </Route>
               </Route>
-            </Routes>
-          </AppInitializer>
+              </Routes>
+            </AppInitializer>
+          </AssistantProvider>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>

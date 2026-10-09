@@ -1,22 +1,97 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, Gamepad2, Grid3X3, LogOut, Menu, PenSquare, Search, Settings, User, Users, X } from 'lucide-react'
-import { useState } from 'react'
+import { Bell, ChevronDown, Gamepad2, MapPin, Menu, PenSquare, Settings, User, Users, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { getGames } from '@/api/game'
+import { Pagination } from '@/components/ui/Pagination'
 import { getUnreadCount } from '@/api/notification'
 import { useAuthStore } from '@/store/authStore'
-import { Avatar } from '@/components/ui/Avatar'
+import { UserMenu } from '@/components/layout/UserMenu'
+import { NavbarSearch } from '@/components/layout/NavbarSearch'
 import { cn } from '@/lib/utils'
+import arknightsIcon from '@/assets/arknights.webp'
+import endfieldIcon from '@/assets/arknights-endfield.webp'
+
+const gameSectionIcons: Record<string, string> = {
+  '明日方舟': arknightsIcon,
+  '明日方舟：终末地': endfieldIcon,
+  '明日方舟终末地': endfieldIcon,
+  '明日方舟:终末地': endfieldIcon,
+}
 
 const navLinks = [
   { to: '/', label: '首页' },
-  { to: '/games', label: '游戏库' },
-  { to: '/community', label: '社区' },
+  { to: '/community', label: '全部社区' },
 ]
 
 export function Navbar() {
   const navigate = useNavigate()
   const { user, isAuthenticated, logout, isAdmin } = useAuthStore()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [sectionsOpen, setSectionsOpen] = useState(false)
+  const [gamesPage, setGamesPage] = useState(1)
+  const location = useLocation()
+  const headerRef = useRef<HTMLElement>(null)
+  const sectionsButtonRef = useRef<HTMLButtonElement>(null)
+  const sectionsCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelSectionsClose = () => {
+    if (sectionsCloseTimer.current !== null) {
+      clearTimeout(sectionsCloseTimer.current)
+      sectionsCloseTimer.current = null
+    }
+  }
+  const openSectionsOnHover = () => {
+    cancelSectionsClose()
+    setSectionsOpen(true)
+  }
+  const scheduleSectionsClose = () => {
+    cancelSectionsClose()
+    sectionsCloseTimer.current = setTimeout(() => {
+      setSectionsOpen(false)
+      sectionsCloseTimer.current = null
+    }, 180)
+  }
+  useEffect(() => () => {
+    if (sectionsCloseTimer.current !== null) clearTimeout(sectionsCloseTimer.current)
+  }, [])
+  const selectedGameId = new URLSearchParams(location.search).get('gameId')
+  const sectionsActive = (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
+  const { data: games, isLoading: gamesLoading, isError: gamesError, refetch: reloadGames } = useQuery({
+    queryKey: ['nav-game-sections', gamesPage],
+    queryFn: () => getGames({ page: gamesPage, size: 12 }),
+    enabled: sectionsOpen,
+  })
+
+  useEffect(() => {
+    if (!sectionsOpen && !mobileOpen) return
+    const closeOutside = (event: PointerEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) {
+        setSectionsOpen(false)
+        setMobileOpen(false)
+        if (sectionsCloseTimer.current !== null) clearTimeout(sectionsCloseTimer.current)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSectionsOpen(false)
+        setMobileOpen(false)
+        if (sectionsCloseTimer.current !== null) clearTimeout(sectionsCloseTimer.current)
+        sectionsButtonRef.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [sectionsOpen, mobileOpen])
+
+  const closeMenus = () => {
+    cancelSectionsClose()
+    setSectionsOpen(false)
+    setMobileOpen(false)
+  }
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['notifications', 'unread-count'],
@@ -31,26 +106,30 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="mx-auto flex h-[58px] max-w-[1190px] items-center justify-between rounded-lg bg-[#2d2d2d] px-4 shadow-[0_12px_30px_rgba(22,24,28,0.16)]">
-        <Link to="/" className="flex min-w-0 items-center gap-2 cursor-pointer">
+    <header ref={headerRef} onClick={(event) => { if ((event.target as HTMLElement).closest('a')) closeMenus() }} className={cn(
+      'sticky z-40 bg-[#333333] shadow-[0_8px_24px_rgba(0,0,0,0.15)]',
+      (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
+        ? 'community-navbar rounded-2xl'
+        : 'top-0',
+    )}>
+      <div className={cn('mx-auto flex max-w-[1500px] items-center gap-4 px-5 sm:px-8', (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname)) ? 'h-[68px]' : 'h-20')}>
+        <Link to="/" onClick={closeMenus} className="flex min-w-0 shrink-0 items-center gap-2 cursor-pointer">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-[#2d2d2d]">
             <Gamepad2 className="h-6 w-6" />
           </span>
           <span className="text-lg font-black tracking-tight text-white">D-Game</span>
-          <span className="hidden text-[10px] font-semibold uppercase tracking-wider text-white/45 sm:inline">
-            player community
-          </span>
         </Link>
 
-        <nav className="hidden h-full items-center gap-1 md:flex">
-          {navLinks.map((link) => (
+        <nav className="hidden h-full items-center gap-1 lg:flex">
+          {navLinks.filter((link) => link.to === '/').map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
+              end
+              onClick={closeMenus}
               className={({ isActive }) =>
                 cn(
-                  'relative flex h-full items-center px-4 text-base font-bold transition-colors duration-200 cursor-pointer',
+                  'relative flex h-full items-center px-4 text-xl font-black transition-colors duration-200 cursor-pointer',
                   isActive ? 'text-white' : 'text-white/55 hover:text-white',
                   isActive &&
                     'after:absolute after:bottom-0 after:left-4 after:right-4 after:h-1 after:rounded-t-full after:bg-primary',
@@ -60,21 +139,26 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          <button
+            ref={sectionsButtonRef}
+            type="button"
+            aria-expanded={sectionsOpen}
+            aria-controls="game-sections-panel"
+            onPointerEnter={(event) => { if (event.pointerType === 'mouse') openSectionsOnHover() }}
+            onPointerLeave={(event) => { if (event.pointerType === 'mouse') scheduleSectionsClose() }}
+            onClick={() => { cancelSectionsClose(); setSectionsOpen(!sectionsOpen) }}
+            className={cn('relative flex h-full items-center gap-2 px-4 text-xl font-black transition-colors',
+              sectionsActive || sectionsOpen ? 'text-white after:absolute after:bottom-0 after:left-6 after:right-6 after:h-1 after:rounded-full after:bg-primary' : 'text-white/60 hover:text-white')}
+          >
+            版区 <ChevronDown className={cn('h-5 w-5 rounded-full bg-white/5 transition-transform', sectionsOpen && 'rotate-180')} />
+          </button>
         </nav>
 
-        <div className="hidden min-w-0 flex-1 justify-end md:flex">
-          <Link
-            to="/search"
-            className="mr-3 flex h-10 w-full max-w-[360px] items-center gap-2 rounded-full bg-[#242424] px-4 text-sm text-white/35 transition-colors duration-200 hover:bg-[#202020] hover:text-white/60"
-            aria-label="搜索"
-          >
-            <Grid3X3 className="h-4 w-4" />
-            <span className="min-w-0 flex-1 truncate">搜索你感兴趣的内容</span>
-            <Search className="h-4 w-4" />
-          </Link>
+        <div className="hidden min-w-0 flex-1 justify-end lg:flex">
+          <NavbarSearch />
         </div>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {isAuthenticated ? (
             <>
               <Link
@@ -84,8 +168,8 @@ export function Navbar() {
                 <PenSquare className="h-4 w-4" />
                 发帖
               </Link>
-              <Link to="/following" className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-semibold text-white/65 hover:bg-white/8 hover:text-white">
-                <Users className="h-4 w-4" />关注动态
+              <Link to="/following" aria-label="关注动态" className="flex items-center gap-1 rounded-md p-2 text-sm font-semibold text-white/65 hover:bg-white/8 hover:text-white">
+                <Users className="h-5 w-5" />
               </Link>
               <Link
                 to="/notifications"
@@ -108,20 +192,7 @@ export function Navbar() {
                   管理
                 </Link>
               )}
-              <Link
-                to={`/users/${user!.id}`}
-                className="ml-1 flex items-center gap-2 rounded-full bg-white/8 px-2 py-1.5 transition-colors duration-200 hover:bg-white/12 cursor-pointer"
-              >
-                <Avatar src={user?.avatarUrl} size="sm" />
-                <span className="max-w-20 truncate text-sm font-semibold text-white">{user?.nickname}</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="rounded-md p-2 text-white/55 transition-colors duration-200 hover:bg-white/8 hover:text-white cursor-pointer"
-                aria-label="退出登录"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
+              <UserMenu />
             </>
           ) : (
             <>
@@ -144,17 +215,55 @@ export function Navbar() {
         </div>
 
         <button
-          className="rounded-md p-2 text-white/75 transition-colors duration-200 hover:bg-white/8 md:hidden cursor-pointer"
-          onClick={() => setMobileOpen(!mobileOpen)}
+          className="rounded-md p-2 text-white/75 transition-colors duration-200 hover:bg-white/8 lg:hidden cursor-pointer"
+          onClick={() => { setMobileOpen(!mobileOpen); setSectionsOpen(false) }}
           aria-label="菜单"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
+      {sectionsOpen && (
+        <section id="game-sections-panel" aria-label="游戏版区"
+          onPointerEnter={(event) => { if (event.pointerType === 'mouse') cancelSectionsClose() }}
+          onPointerLeave={(event) => { if (event.pointerType === 'mouse') scheduleSectionsClose() }}
+          className="nav-sections-reveal absolute left-0 right-0 top-full border-t border-white/5 bg-[#292929] shadow-2xl">
+          <div className="mx-auto max-h-[70vh] max-w-[1190px] overflow-y-auto px-6 py-7">
+            <div className="mb-5 flex items-center justify-between text-sm">
+              <span className="font-semibold text-white/40">选择你感兴趣的游戏版区</span>
+              <div className="flex gap-5">
+                <Link to="/community" onClick={closeMenus} className="text-white/70 hover:text-primary">全部社区</Link>
+              </div>
+            </div>
+            {gamesLoading ? <p className="py-8 text-center text-white/50">正在加载版区…</p> : gamesError ? (
+              <div className="py-8 text-center text-white/60">版区加载失败 <button onClick={() => reloadGames()} className="ml-3 text-primary">重试</button></div>
+            ) : !games?.records.length ? <p className="py-8 text-center text-white/50">暂无游戏版区</p> : (
+              <>
+                <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {games.records.map((game) => (
+                    <Link key={game.id} to={`/community?gameId=${encodeURIComponent(game.id)}`} onClick={closeMenus}
+                      aria-current={sectionsActive && selectedGameId === game.id ? 'page' : undefined}
+                      className={cn('flex items-center gap-3 rounded-xl px-3 py-4 transition-colors hover:bg-white/5',
+                        sectionsActive && selectedGameId === game.id ? 'bg-white/5 text-primary' : 'text-white/65 hover:text-white')}>
+                      <MapPin className="h-4 w-4 shrink-0 text-white/20" />
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10">
+                        {gameSectionIcons[game.name] || game.coverUrl ? <img src={gameSectionIcons[game.name] || game.coverUrl!} alt="" className="h-full w-full object-cover" /> : <Gamepad2 className="h-7 w-7 text-primary" />}
+                      </span>
+                      <span className="truncate text-lg font-bold">{game.name}</span>
+                    </Link>
+                  ))}
+                </div>
+                <Pagination page={gamesPage} size={12} total={games.total} onChange={setGamesPage} />
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       {mobileOpen && (
-        <div className="mx-auto mt-2 max-w-[1190px] rounded-lg bg-[#2d2d2d] px-4 py-3 shadow-lg md:hidden">
+        <div className="mx-auto mt-2 max-w-[1190px] rounded-lg bg-[#2d2d2d] px-4 py-3 shadow-lg lg:hidden">
           <nav className="flex flex-col gap-1">
+            <button type="button" onClick={() => { setMobileOpen(false); setSectionsOpen(true) }} className="rounded-md px-3 py-2 text-left font-bold text-white">游戏版区 <ChevronDown className="inline h-4 w-4" /></button>
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -170,9 +279,7 @@ export function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <NavLink to="/search" onClick={() => setMobileOpen(false)} className="rounded-md px-3 py-2 text-sm font-bold text-white/70 cursor-pointer">
-              搜索
-            </NavLink>
+            <NavbarSearch />
             {isAuthenticated ? (
               <>
                 <NavLink to="/posts/new" onClick={() => setMobileOpen(false)} className="rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">

@@ -8,10 +8,11 @@ interface PostCardProps {
   post: PostResp
   className?: string
   badgeLabel?: string
+  compact?: boolean
 }
 
-export function PostCard({ post, className, badgeLabel }: PostCardProps) {
-  const images = extractImages(post.content).slice(0, 2)
+export function PostCard({ post, className, badgeLabel, compact }: PostCardProps) {
+  const images = extractImages(post.content).slice(0, compact ? 5 : 2)
   const excerpt = stripHtml(post.content)
   const authorName = post.authorNickname || post.authorUsername || '用户'
 
@@ -53,9 +54,9 @@ export function PostCard({ post, className, badgeLabel }: PostCardProps) {
 
       <Link to={`/posts/${post.id}`} className="mt-4 block">
         {images.length > 0 && (
-          <div className={cn('grid gap-3', images.length > 1 ? 'grid-cols-2' : 'grid-cols-1')}>
+          <div className={cn(compact ? 'flex gap-2 overflow-hidden' : 'grid gap-3', !compact && (images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'))}>
             {images.map((src) => (
-              <div key={src} className="aspect-[4/3] overflow-hidden rounded-md bg-muted">
+              <div key={src} className={compact ? 'h-40 w-32 shrink-0 overflow-hidden rounded-md bg-muted' : 'aspect-[4/3] overflow-hidden rounded-md bg-muted'}>
                 <img
                   src={src}
                   alt=""

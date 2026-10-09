@@ -25,8 +25,8 @@ const PAGE_SIZE = 10
 // Keep the URL tab names independent from backend numeric status codes.
 const tabs: Array<{ key: PostManageTab; label: string; countKey: 'publishedCount' | 'pendingCount' | 'rejectedCount' | 'draftCount' }> = [
   { key: 'published', label: '已发布', countKey: 'publishedCount' },
-  { key: 'pending', label: '审核中', countKey: 'pendingCount' },
-  { key: 'rejected', label: '未通过', countKey: 'rejectedCount' },
+  { key: 'pending', label: '历史待审核', countKey: 'pendingCount' },
+  { key: 'rejected', label: '已封禁', countKey: 'rejectedCount' },
   { key: 'draft', label: '草稿', countKey: 'draftCount' },
 ]
 

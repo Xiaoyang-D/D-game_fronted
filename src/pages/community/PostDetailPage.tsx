@@ -21,6 +21,7 @@ import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
 import { getUserProfile } from '@/api/user'
+import { PostImageGallery, postTextWithoutImages } from '@/components/community/PostImageGallery'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -31,9 +32,10 @@ import { Textarea } from '@/components/ui/Textarea'
 import { useToast } from '@/components/ui/Toast'
 import { useInteraction } from '@/hooks/useInteraction'
 import { CONTENT_STATUS, TARGET_TYPE } from '@/lib/constants'
-import { cn, formatDateTime, getContentStatusLabel, isApprovedPost, isTopLevelComment, isValidId } from '@/lib/utils'
+import { cn, formatDateTime, getContentStatusLabel, isApprovedPost, isValidId } from '@/lib/utils'
+import { buildCommentThreads } from '@/lib/commentThreads'
 import { useAuthStore } from '@/store/authStore'
-import type { CommentResp, CommentSort, Id, PostResp } from '@/types/api'
+import type { CommentResp, CommentSort, PostResp } from '@/types/api'
 
 const COMMENT_PAGE_SIZE = 20
 
@@ -44,7 +46,6 @@ const commentSortOptions: Array<{ value: CommentSort; label: string }> = [
 ]
 
 const toolLinks = [
-  { to: '/games', label: '游戏库', icon: Gamepad2 },
   { to: '/community', label: '社区', icon: MessageSquare },
   { to: '/search', label: '搜索', icon: Search },
   { to: '/following', label: '关注流', icon: Users },
@@ -54,10 +55,12 @@ const toolLinks = [
 function CommentItem({
   comment,
   nested = false,
+  replyToName,
   onReply,
 }: {
   comment: CommentResp
   nested?: boolean
+  replyToName?: string
   onReply: (comment: CommentResp) => void
 }) {
   const { isAuthenticated } = useAuthStore()
@@ -80,6 +83,7 @@ function CommentItem({
           </Link>
           <time className="text-xs text-text-secondary">{formatDateTime(comment.gmtCreate)}</time>
         </div>
+        {replyToName && <p className="mt-2 text-xs text-text-secondary">回复 @{replyToName}</p>}
         <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-text-secondary">{comment.content}</p>
         <footer className="mt-3 flex items-center gap-4 text-xs font-semibold text-text-secondary">
           <span className="inline-flex items-center gap-1">
@@ -146,74 +150,44 @@ function AuthorCard({ post }: { post: PostResp }) {
   const canShowAction = isSelf || !authorProfileError
 
   return (
-    <section className="rounded-lg bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3">
+    <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-3">
         <Link to={`/users/${post.userId}`} className="shrink-0" aria-label={`查看 ${authorName} 的主页`}>
-          <Avatar src={authorAvatar} alt={`${authorName} 头像`} size="lg" className="rounded-md" />
+          <Avatar src={authorAvatar} alt={`${authorName} 头像`} size="lg" className="rounded-full" />
         </Link>
-        <div className="min-w-0 flex-1">
-          <Link to={`/users/${post.userId}`} className="line-clamp-1 text-base font-black text-text hover:text-primary">
-            {authorName}
-          </Link>
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-text-secondary">
-            {authorProfile?.bio || (authorProfileError ? '作者资料暂不可用。' : '这个用户还没有写简介。')}
-          </p>
-        </div>
+        <Link to={`/users/${post.userId}`} className="min-w-0 flex-1 truncate text-sm font-bold text-text hover:text-primary">{authorName}</Link>
+        {canShowAction && <Button size="sm" variant={isSelf || authorProfile?.isFollowing ? 'outline' : 'primary'} onClick={handleAction} loading={followMutation.isPending} className="shrink-0">
+          {isSelf ? <PenSquare className="h-3 w-3" /> : authorProfile?.isFollowing ? <UserCheck className="h-3 w-3" /> : <UserRoundPlus className="h-3 w-3" />}
+          {isSelf ? '编辑' : authorProfile?.isFollowing ? '已关注' : '关注'}
+        </Button>}
       </div>
-
-      {canShowAction && (
-        <Button
-          className="mt-4 w-full"
-          variant={isSelf ? 'outline' : authorProfile?.isFollowing ? 'outline' : 'primary'}
-          onClick={handleAction}
-          loading={followMutation.isPending}
-        >
-          {isSelf ? <PenSquare className="h-4 w-4" /> : authorProfile?.isFollowing ? <UserCheck className="h-4 w-4" /> : <UserRoundPlus className="h-4 w-4" />}
-          {isSelf ? '编辑资料' : !isAuthenticated ? '登录后关注' : authorProfile?.isFollowing ? '取消关注' : '关注'}
-        </Button>
-      )}
+      <p className="mt-3 line-clamp-3 text-xs leading-5 text-text-secondary">{authorProfile?.bio || (authorProfileError ? '作者资料暂不可用。' : '这个用户还没有写简介。')}</p>
     </section>
   )
 }
 
 function ContentContextCard({ post }: { post: PostResp }) {
-  return (
-    <section className="rounded-lg bg-white p-5 shadow-sm">
-      <h2 className="text-base font-black text-text">内容归属</h2>
-      <div className="mt-4 space-y-4 text-sm">
-        <div className="flex items-center justify-between gap-4">
-          <span className="shrink-0 text-text-secondary">版块</span>
-          <Link
-            to={`/community?boardId=${post.boardId}`}
-            className="inline-flex min-w-0 items-center gap-1.5 font-semibold text-text hover:text-primary"
-          >
-            <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{post.boardName}</span>
-          </Link>
-        </div>
-        {post.gameId && post.gameName && (
-          <div className="flex items-center justify-between gap-4">
-            <span className="shrink-0 text-text-secondary">关联游戏</span>
-            <Link
-              to={`/games/${post.gameId}`}
-              className="inline-flex min-w-0 items-center gap-1.5 font-semibold text-text hover:text-primary"
-            >
-              <Gamepad2 className="h-4 w-4 shrink-0 text-primary" />
-              <span className="truncate">{post.gameName}</span>
-            </Link>
-          </div>
-        )}
+  return <section className="rounded-2xl bg-white p-4 shadow-sm">
+    <div className="flex items-start gap-4 text-xs leading-6">
+      <span className="shrink-0 font-bold text-text">分区</span>
+      <Link to={`/community?boardId=${post.boardId}${post.gameId ? `&gameId=${post.gameId}` : ''}`} className="flex flex-wrap items-center gap-2 text-text-secondary hover:text-primary"><Gamepad2 className="h-4 w-4" />{post.gameName || '社区'}<span>–</span><MessageSquare className="h-4 w-4" />{post.boardName}</Link>
+    </div>
+    <div className="mt-3 flex items-start gap-4 text-xs">
+      <span className="shrink-0 pt-1 font-bold text-text">话题</span>
+      <div className="flex flex-wrap gap-2">
+        {post.gameName && <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">#{post.gameName}</span>}
+        {post.topics?.map(topic => <span key={topic.id} className="rounded-full bg-muted px-3 py-1 text-text-secondary">#{topic.name}</span>)}
+        {!post.gameName && !post.topics?.length && <span className="pt-1 text-text-secondary">暂无话题</span>}
       </div>
-    </section>
-  )
+    </div>
+  </section>
 }
-
 function CommunityTools() {
   const { isAuthenticated } = useAuthStore()
 
   return (
     <>
-      <section className="rounded-lg bg-white p-5 shadow-sm">
+      <section className="rounded-2xl bg-white p-5 shadow-sm">
         <h2 className="text-base font-black text-text">社区工具</h2>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {toolLinks.map((tool) => {
@@ -235,7 +209,7 @@ function CommunityTools() {
       {isAuthenticated ? (
         <CheckInCard />
       ) : (
-        <section className="rounded-lg bg-white p-5 shadow-sm">
+        <section className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="text-base font-black text-text">加入社区</h2>
           <p className="mt-2 text-sm leading-6 text-text-secondary">登录后可参与讨论、关注创作者并领取每日签到奖励。</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -327,7 +301,7 @@ export function PostDetailPage() {
     const message = error instanceof Error ? error.message : '加载失败'
     const isForbidden = message.includes('审核') || message.includes('权限')
     return (
-      <div className="mx-auto max-w-[1190px] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="community-shell">
         <Empty title={isForbidden ? '内容暂不可见' : '帖子不存在'} description={isForbidden ? message : undefined} />
       </div>
     )
@@ -339,37 +313,36 @@ export function PostDetailPage() {
 
   if (!canView) {
     return (
-      <div className="mx-auto max-w-[1190px] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="community-shell">
         <Empty title="内容暂不可见" description={`该帖子状态为：${getContentStatusLabel(post.status)}`} />
       </div>
     )
   }
 
   const showPendingBanner = post.status === CONTENT_STATUS.PENDING && (isAuthor || isAdmin())
-  const topComments = comments?.records.filter((comment) => isTopLevelComment(comment.parentId)) || []
-  const repliesMap = comments?.records
-    .filter((comment) => !isTopLevelComment(comment.parentId))
-    .reduce<Record<Id, CommentResp[]>>((acc, comment) => {
-      if (!acc[comment.parentId]) acc[comment.parentId] = []
-      acc[comment.parentId].push(comment)
-      return acc
-    }, {}) || {}
+  const commentThreads = buildCommentThreads(comments?.records || [])
 
   return (
-    <div className="mx-auto max-w-[1190px] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="community-shell">
       {showPendingBanner && (
         <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           该帖子正在等待管理员审核，审核通过后会出现在社区列表中。
         </div>
       )}
+      {post.status === CONTENT_STATUS.REJECTED && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          该帖子已被管理员封禁，不对外展示。修改内容不会解除封禁，需要管理员解封。
+        </div>
+      )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <main className="min-w-0">
-          <article className="rounded-lg bg-white p-6 shadow-sm sm:p-8">
-            <header className="border-b border-border pb-6">
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <PostImageGallery key={post.id} content={post.content} />
+            <header className="border-b border-border pb-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Link
-                  to={`/community?boardId=${post.boardId}`}
+                  to={`/community?boardId=${post.boardId}${post.gameId ? `&gameId=${post.gameId}` : ''}`}
                   className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/20"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
@@ -377,10 +350,10 @@ export function PostDetailPage() {
                 </Link>
                 <time className="text-xs text-text-secondary">发布于 {formatDateTime(post.gmtCreate)}</time>
               </div>
-              <h1 className="mt-5 break-words text-3xl font-black leading-tight text-text sm:text-4xl">{post.title}</h1>
+              <h1 className="mt-3 break-words text-2xl font-black leading-tight text-text">{post.title}</h1>
               {post.gameId && post.gameName && (
                 <Link
-                  to={`/games/${post.gameId}`}
+                  to={`/community?gameId=${post.gameId}`}
                   className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-text-secondary hover:text-primary"
                 >
                   <Gamepad2 className="h-4 w-4 text-primary" />
@@ -406,7 +379,7 @@ export function PostDetailPage() {
 
             <div
               className="mt-8 break-words text-[15px] leading-8 text-text-secondary [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:bg-muted [&_blockquote]:px-4 [&_blockquote]:py-3 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:leading-tight [&_h1]:text-text [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:leading-tight [&_h2]:text-text [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text [&_img]:my-6 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: postTextWithoutImages(post.content) }}
             />
 
             <footer className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
@@ -443,7 +416,7 @@ export function PostDetailPage() {
             </footer>
           </article>
 
-          <section className="mt-6 rounded-lg bg-white p-6 shadow-sm sm:p-8">
+          <section id="post-comments" className="mt-4 scroll-mt-28 rounded-2xl bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-xl font-black text-text">评论 <span className="text-sm font-semibold text-text-secondary">{post.commentCount}</span></h2>
               <div className="inline-flex w-fit rounded-md bg-muted p-1" role="group" aria-label="评论排序">
@@ -505,15 +478,15 @@ export function PostDetailPage() {
             <div className="mt-6">
               {commentsLoading ? (
                 <Loading text="加载评论..." />
-              ) : topComments.length > 0 ? (
+              ) : commentThreads.length > 0 ? (
                 <>
                   <div className="divide-y divide-border">
-                    {topComments.map((comment) => (
-                      <div key={comment.id}>
-                        <CommentItem comment={comment} onReply={setReplyTo} />
-                        {repliesMap[comment.id]?.map((reply) => (
-                          <div key={reply.id} className="ml-6 border-l-2 border-primary/20 pl-4 sm:ml-12">
-                            <CommentItem comment={reply} nested onReply={setReplyTo} />
+                    {commentThreads.map((thread) => (
+                      <div key={thread.root.comment.id}>
+                        <CommentItem {...thread.root} onReply={setReplyTo} />
+                        {thread.replies.map((reply) => (
+                          <div key={reply.comment.id} className="ml-6 border-l-2 border-primary/20 pl-4 sm:ml-12">
+                            <CommentItem {...reply} nested onReply={setReplyTo} />
                           </div>
                         ))}
                       </div>
@@ -535,11 +508,16 @@ export function PostDetailPage() {
           </section>
         </main>
 
-        <aside className="space-y-4 lg:sticky lg:top-24">
+        <aside className="space-y-3 lg:sticky lg:top-28">
           <AuthorCard post={post} />
           <ContentContextCard post={post} />
           <CommunityTools />
         </aside>
+      </div>
+      <div className="fixed bottom-24 right-5 z-30 hidden flex-col gap-3 min-[1500px]:flex" aria-label="帖子互动">
+        <button type="button" disabled={statusLoading || likeLoading} onClick={toggleLike} aria-label={liked ? '取消点赞' : '点赞'} className={cn('flex h-14 w-14 flex-col items-center justify-center rounded-full border border-border bg-white text-xs shadow-sm', liked && 'text-primary')}><ThumbsUp className="mb-1 h-5 w-5" />{post.likeCount}</button>
+        <button type="button" disabled={statusLoading || favoriteLoading} onClick={toggleFavorite} aria-label={favorited ? '取消收藏' : '收藏'} className={cn('flex h-14 w-14 flex-col items-center justify-center rounded-full border border-border bg-white text-xs shadow-sm', favorited && 'text-primary')}><Heart className="mb-1 h-5 w-5" />{post.favoriteCount}</button>
+        <a href="#post-comments" aria-label="跳转评论" className="flex h-14 w-14 flex-col items-center justify-center rounded-full border border-border bg-white text-xs shadow-sm"><MessageCircle className="mb-1 h-5 w-5" />{post.commentCount}</a>
       </div>
     </div>
   )

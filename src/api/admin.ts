@@ -1,4 +1,8 @@
 import api from './client'
+
+export function getAdminPosts(params: { page: number; size: number; status?: number }): Promise<PageResult<PostResp>> {
+  return api.get<PageResult<PostResp>>('/admin/posts', { params })
+}
 import type {
   AssignRoleReq,
   AuditReq,
