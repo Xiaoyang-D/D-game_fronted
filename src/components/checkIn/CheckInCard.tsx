@@ -22,6 +22,7 @@ export function CheckInCard() {
       toast(`签到成功！已连续签到 ${result.streakDays} 天`)
     },
     onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['checkIn', 'status'] })
       toast(err instanceof Error ? err.message : '签到失败', 'error')
     },
   })
@@ -35,6 +36,7 @@ export function CheckInCard() {
   }
 
   const checkedInToday = status?.checkedInToday ?? false
+  const rewardPending = status?.rewardPending ?? false
   const streakDays = status?.streakDays ?? 0
 
   return (
@@ -54,10 +56,10 @@ export function CheckInCard() {
         <Button
           onClick={() => checkInMutation.mutate()}
           loading={checkInMutation.isPending}
-          disabled={checkedInToday}
+          disabled={checkedInToday && !rewardPending}
           variant={checkedInToday ? 'outline' : 'primary'}
         >
-          {checkedInToday ? '今日已签到' : '立即签到'}
+          {rewardPending ? '奖励待补发，点击重试' : checkedInToday ? '今日已签到' : '立即签到'}
         </Button>
       </div>
     </Card>

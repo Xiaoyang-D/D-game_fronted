@@ -438,6 +438,7 @@ export interface NotificationsQuery {
 
 export interface CheckInStatusResp {
   checkedInToday: boolean
+  rewardPending: boolean
   streakDays: number
   lastCheckInDate: string | null
 }
