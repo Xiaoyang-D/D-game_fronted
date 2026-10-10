@@ -9,15 +9,6 @@ import { useAuthStore } from '@/store/authStore'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { NavbarSearch } from '@/components/layout/NavbarSearch'
 import { cn } from '@/lib/utils'
-import arknightsIcon from '@/assets/arknights.webp'
-import endfieldIcon from '@/assets/arknights-endfield.webp'
-
-const gameSectionIcons: Record<string, string> = {
-  '明日方舟': arknightsIcon,
-  '明日方舟：终末地': endfieldIcon,
-  '明日方舟终末地': endfieldIcon,
-  '明日方舟:终末地': endfieldIcon,
-}
 
 const navLinks = [
   { to: '/', label: '首页' },
@@ -58,7 +49,7 @@ export function Navbar() {
   const sectionsActive = (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
   const highlightedNav = hoveredNav ?? (sectionsOpen || sectionsActive ? 'sections' : location.pathname === '/' ? 'home' : null)
   const { data: games, isLoading: gamesLoading, isError: gamesError, refetch: reloadGames } = useQuery({
-    queryKey: ['nav-game-sections', gamesPage],
+    staleTime: 0, queryKey: ['nav-game-sections', gamesPage],
     queryFn: () => getGames({ page: gamesPage, size: 12 }),
     enabled: sectionsOpen,
   })
@@ -248,7 +239,7 @@ export function Navbar() {
                         sectionsActive && selectedGameId === game.id ? 'bg-white/5 text-primary' : 'text-white/65 hover:text-white')}>
                       <MapPin className="h-4 w-4 shrink-0 text-white/20" />
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10">
-                        {gameSectionIcons[game.name] || game.coverUrl ? <img src={gameSectionIcons[game.name] || game.coverUrl!} alt="" className="h-full w-full object-cover" /> : <Gamepad2 className="h-7 w-7 text-primary" />}
+                        {game.iconUrl || game.coverUrl ? <img src={game.iconUrl || game.coverUrl!} alt="" className="h-full w-full object-contain" /> : <Gamepad2 className="h-7 w-7 text-primary" />}
                       </span>
                       <span className="truncate text-lg font-bold">{game.name}</span>
                     </Link>

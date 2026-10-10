@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 const adminLinks = [
   { to: '/admin', label: '概览', icon: Shield, end: true },
-  { to: '/admin/games/new', label: '创建游戏', icon: Gamepad2 },
+  { to: '/admin/game-sections', label: '版区管理', icon: Gamepad2 },
   { to: '/admin/posts', label: '帖子管理', icon: MessageSquare },
   { to: '/admin/posts/banned', label: '封禁作者帖子', icon: UserX },
   { to: '/admin/comments', label: '评论审核', icon: MessagesSquare },

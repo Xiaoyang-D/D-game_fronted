@@ -22,8 +22,8 @@ export function SearchResultsPage() {
   const hot = params.get('sort') !== 'latest'
   const page = Math.max(1, Number(params.get('page')) || 1)
   const [history, setHistory] = useState(readHistory)
-  const { data: boards } = useQuery({ queryKey: ['boards'], queryFn: getBoards })
-  const guideId = boards?.find(board => board.name === '攻略')?.id
+  const { data: boards } = useQuery({ staleTime: 0, queryKey: ['boards', gameId], queryFn: () => getBoards(gameId) })
+  const guideId = boards?.find(board => board.iconKey === 'guide')?.id
   const { data, isLoading, error } = useQuery({
     queryKey: ['search-results', keyword, gameId, tab, hot, page, guideId],
     queryFn: () => search({ keyword, gameId, type: tab === 'all' && !gameId ? 'ALL' : 'POST', boardId: tab === 'guide' ? guideId : undefined, recommended: hot, page, size: 10 }),

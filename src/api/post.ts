@@ -15,8 +15,8 @@ import type {
   PostsQuery,
 } from '@/types/api'
 
-export async function getBoards(): Promise<Board[]> {
-  return api.get<Board[]>('/boards')
+export async function getBoards(gameId?: Id): Promise<Board[]> {
+  return api.get<Board[]>('/boards', { params: { gameId } })
 }
 
 export async function getPosts(params: PostsQuery): Promise<PageResult<PostResp>> {

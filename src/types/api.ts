@@ -54,6 +54,11 @@ export interface Tag {
 }
 
 export interface GameResp {
+  englishName: string
+  iconUrl: string
+  bannerUrl: string
+  sortOrder: number
+  enabled: boolean
   id: Id
   name: string
   categoryId: Id
@@ -80,6 +85,11 @@ export interface GameReviewResp {
 }
 
 export interface Board {
+  iconKey: string
+  iconUrl: string
+  bannerUrl: string
+  enabled: boolean
+  publishPolicy: 'LOGIN' | 'ADMIN'
   id: Id
   name: string
   description: string

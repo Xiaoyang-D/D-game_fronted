@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import heroImage from '@/assets/hero.png'
 import { getGames } from '@/api/game'
-import { getBoards, getPosts } from '@/api/post'
+import { getPosts } from '@/api/post'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
 import { PublishCard } from '@/components/community/PublishCard'
 import { PostCard } from '@/components/community/PostCard'
@@ -76,13 +76,8 @@ const defaultHeroSlides: HeroSlide[] = [
 
 export function HomePage() {
   const { isAuthenticated } = useAuthStore()
-  const { data: boards, isLoading: boardsLoading } = useQuery({
-    queryKey: ['boards'],
-    queryFn: getBoards,
-  })
-
   const { data: games, isLoading: gamesLoading } = useQuery({
-    queryKey: ['games', 'home'],
+    staleTime: 0, queryKey: ['games', 'home'],
     queryFn: () => getGames({ page: 1, size: 6 }),
   })
 
@@ -127,16 +122,16 @@ export function HomePage() {
 
           <div className="mt-8">
             <h3 className="text-xs font-black uppercase tracking-wider text-text-secondary">
-              板块 BOARDS_
+              游戏版区 GAMES_
             </h3>
             <div className="mt-3 flex flex-col gap-1">
-              {boardsLoading ? (
+              {gamesLoading ? (
                 <p className="px-3 py-2 text-sm text-text-secondary">加载中...</p>
               ) : (
-                boards?.slice(0, 6).map((board) => (
+                games?.records.map((board) => (
                   <Link
                     key={board.id}
-                    to={`/community?boardId=${board.id}`}
+                    to={`/community?gameId=${board.id}`}
                     className="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary hover:bg-muted hover:text-text"
                   >
                     {board.name}
@@ -297,7 +292,7 @@ function buildHeroSlides(games: GameResp[] = []): HeroSlide[] {
     eyebrow: index === 0 ? 'GAME PICK' : 'HOT GAME',
     title: game.name,
     description: game.description || `${game.categoryName} 玩家正在关注的作品，去看看评分、短评和相关讨论。`,
-    image: game.coverUrl || heroImage,
+    image: game.bannerUrl || game.coverUrl || heroImage,
     imageAlt: game.name,
     primaryLabel: '进入版区',
     primaryTo: `/community?gameId=${game.id}`,

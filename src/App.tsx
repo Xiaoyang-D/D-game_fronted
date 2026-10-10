@@ -22,6 +22,7 @@ import { UserProfilePage } from '@/pages/users/UserProfilePage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage'
 import { AdminHomePage } from '@/pages/admin/AdminHomePage'
+import { GameSectionsPage } from '@/pages/admin/GameSectionsPage'
 import { AdminCreateGamePage } from '@/pages/admin/AdminCreateGamePage'
 import { AdminAuditPostPage } from '@/pages/admin/AdminAuditPostPage'
 import { AdminBannedPostsPage } from '@/pages/admin/AdminBannedPostsPage'
@@ -129,6 +130,7 @@ export default function App() {
                   }
                 >
                   <Route index element={<AdminHomePage />} />
+                  <Route path="game-sections" element={<GameSectionsPage />} />
                   <Route path="games/new" element={<AdminCreateGamePage />} />
                   <Route path="posts" element={<AdminAuditPostPage />} />
                   <Route path="posts/banned" element={<AdminBannedPostsPage />} />

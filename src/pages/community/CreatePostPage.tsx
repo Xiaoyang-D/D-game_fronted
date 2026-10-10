@@ -74,11 +74,11 @@ export function CreatePostPage() {
   const [scheduleBaseTime] = useState(() => Date.now())
 
   const { data: boards, isLoading: boardsLoading } = useQuery({
-    queryKey: ['boards'],
-    queryFn: getBoards,
+    staleTime: 0, queryKey: ['boards', gameId],
+    queryFn: () => getBoards(gameId || undefined),
   })
   const { data: games } = useQuery({
-    queryKey: ['games', 'post-options'],
+    staleTime: 0, queryKey: ['games', 'post-options'],
     queryFn: () => getGames({ page: 1, size: 100 }),
   })
   const { data: collections } = useQuery({
@@ -192,7 +192,7 @@ export function CreatePostPage() {
 
   const boardOptions = [
     { value: '', label: '请选择分区' },
-    ...(boards?.filter((board) => board.name !== '官方' || isAdmin()).map((board) => ({ value: String(board.id), label: board.name })) || []),
+    ...(boards?.filter((board) => board.publishPolicy !== 'ADMIN' || isAdmin()).map((board) => ({ value: String(board.id), label: board.name })) || []),
   ]
   const gameOptions = [
     { value: '', label: '不关联游戏' },
@@ -297,7 +297,7 @@ export function CreatePostPage() {
 
           <div className="max-w-xl">
             <FieldHeading label="关联游戏" optional />
-            <Select value={gameId} options={gameOptions} onChange={(event) => setGameId(event.target.value)} />
+            <Select value={gameId} options={gameOptions} onChange={(event) => { setGameId(event.target.value); setBoardId('') }} />
           </div>
 
           <div className="max-w-xl">
