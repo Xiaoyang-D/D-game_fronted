@@ -4,15 +4,12 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   Bell,
-  BookOpen,
   CalendarCheck,
   ChevronLeft,
   ChevronRight,
   Gamepad2,
   Heart,
-  Image,
   MessageSquare,
-  PenSquare,
   Search,
   Star,
   Trophy,
@@ -23,6 +20,7 @@ import heroImage from '@/assets/hero.png'
 import { getGames } from '@/api/game'
 import { getBoards, getPosts } from '@/api/post'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
+import { PublishCard } from '@/components/community/PublishCard'
 import { PostCard } from '@/components/community/PostCard'
 import { Loading } from '@/components/ui/Loading'
 import { Empty } from '@/components/ui/Empty'
@@ -52,17 +50,6 @@ interface HeroSlide {
 }
 
 const defaultHeroSlides: HeroSlide[] = [
-  {
-    eyebrow: 'D-GAME COMMUNITY',
-    title: '发现好游戏，分享游戏心得',
-    description: '进入版区版区、参与讨论、发表攻略，把你的游戏经历沉淀成社区里的高光动态。',
-    image: heroImage,
-    imageAlt: 'D-Game',
-    primaryLabel: '进入社区',
-    primaryTo: '/community',
-    secondaryLabel: '进入版区版区',
-    secondaryTo: '/community',
-  },
   {
     eyebrow: 'PLAYER FEED',
     title: '追踪玩家动态，发现新话题',
@@ -104,7 +91,7 @@ export function HomePage() {
     queryFn: () => getPosts({ page: 1, size: 8 }),
   })
 
-  const featuredGame = games?.records[0]
+
   const heroSlides = useMemo(() => buildHeroSlides(games?.records), [games?.records])
 
   return (
@@ -183,16 +170,7 @@ export function HomePage() {
         )}
 
         <section className="mt-4 rounded-lg bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-black text-text">
-              最新动态<span className="ml-1 text-sm text-border">FEED_</span>
-            </h2>
-            <Link to="/community" className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-hover">
-              查看全部 <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="mt-5">
+          <div>
             {postsLoading ? (
               <Loading />
             ) : posts && posts.records.length > 0 ? (
@@ -223,7 +201,7 @@ export function HomePage() {
           ) : games && games.records.length > 0 ? (
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {games.records.slice(0, 4).map((game) => (
-                <Link key={game.id} to={`/games/${game.id}`} className="group flex gap-3 rounded-md border border-border p-3 hover:border-primary/50">
+                <Link key={game.id} to={`/community?gameId=${game.id}`} className="group flex gap-3 rounded-md border border-border p-3 hover:border-primary/50">
                   <div className="h-20 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
                     {game.coverUrl ? (
                       <img src={game.coverUrl} alt={game.name} className="h-full w-full object-cover" />
@@ -254,25 +232,7 @@ export function HomePage() {
 
       <aside className="hidden lg:block">
         <div className="sticky top-24 flex flex-col gap-4">
-          <section className="rounded-lg bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-black text-text">
-              作品发布<span className="ml-1 text-sm text-border">POST_</span>
-            </h2>
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <Link to="/posts/new" className="flex flex-col items-center gap-2 rounded-md p-2 text-xs font-bold text-text-secondary hover:bg-muted hover:text-primary">
-                <PenSquare className="h-8 w-8 text-primary" />
-                发图文
-              </Link>
-              <Link to="/community" className="flex flex-col items-center gap-2 rounded-md p-2 text-xs font-bold text-text-secondary hover:bg-muted hover:text-primary">
-                <Image className="h-8 w-8 text-primary" />
-                发图集
-              </Link>
-              <Link to="/community" className="flex flex-col items-center gap-2 rounded-md p-2 text-xs font-bold text-text-secondary hover:bg-muted hover:text-primary">
-                <BookOpen className="h-8 w-8 text-primary" />
-                写攻略
-              </Link>
-            </div>
-          </section>
+          <PublishCard />
 
           <section className="rounded-lg bg-white p-4 shadow-sm">
             <h2 className="text-lg font-black text-text">
@@ -316,28 +276,8 @@ export function HomePage() {
             </section>
           )}
 
-          {featuredGame && (
-            <section className="rounded-lg bg-white p-4 shadow-sm">
-              <h2 className="text-lg font-black text-text">
-                今日推荐<span className="ml-1 text-sm text-border">PICK_</span>
-              </h2>
-              <Link to={`/games/${featuredGame.id}`} className="mt-4 block overflow-hidden rounded-md border border-border hover:border-primary/50">
-                <div className="aspect-video bg-muted">
-                  {featuredGame.coverUrl ? (
-                    <img src={featuredGame.coverUrl} alt={featuredGame.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Gamepad2 className="h-10 w-10 text-border" />
-                    </div>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="line-clamp-1 font-black text-text">{featuredGame.name}</h3>
-                  <p className="mt-1 text-xs text-text-secondary">{featuredGame.categoryName}</p>
-                </div>
-              </Link>
-            </section>
-          )}
+
+
 
           <section className="rounded-lg bg-white p-4 text-xs leading-6 text-text-secondary shadow-sm">
             <div className="flex items-center gap-2 font-black text-text">
@@ -359,15 +299,15 @@ function buildHeroSlides(games: GameResp[] = []): HeroSlide[] {
     description: game.description || `${game.categoryName} 玩家正在关注的作品，去看看评分、短评和相关讨论。`,
     image: game.coverUrl || heroImage,
     imageAlt: game.name,
-    primaryLabel: '查看游戏',
-    primaryTo: `/games/${game.id}`,
+    primaryLabel: '进入版区',
+    primaryTo: `/community?gameId=${game.id}`,
     secondaryLabel: '相关讨论',
     secondaryTo: `/community?gameId=${game.id}`,
   }))
 
   if (gameSlides.length === 0) return defaultHeroSlides
-  if (gameSlides.length === 1) return [defaultHeroSlides[0], gameSlides[0], defaultHeroSlides[1]]
-  return [defaultHeroSlides[0], ...gameSlides]
+  if (gameSlides.length === 1) return [gameSlides[0], defaultHeroSlides[0]]
+  return gameSlides
 }
 
 function HeroCarousel({ slides }: { slides: HeroSlide[] }) {

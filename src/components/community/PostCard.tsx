@@ -1,6 +1,7 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Eye, Gamepad2, Heart, MessageCircle, ThumbsUp } from 'lucide-react'
 import type { PostResp } from '@/types/api'
+import { CardFollowButton } from './CardFollowButton'
 import { Avatar } from '@/components/ui/Avatar'
 import { formatDateTime, cn } from '@/lib/utils'
 
@@ -50,17 +51,18 @@ export function PostCard({ post, className, badgeLabel, compact }: PostCardProps
             </span>
           )}
         </div>
+        <CardFollowButton authorId={post.userId} />
       </header>
 
       <Link to={`/posts/${post.id}`} className="mt-4 block">
         {images.length > 0 && (
-          <div className={cn(compact ? 'flex gap-2 overflow-hidden' : 'grid gap-3', !compact && (images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'))}>
+          <div className="flex items-start gap-3 overflow-hidden">
             {images.map((src) => (
-              <div key={src} className={compact ? 'h-40 w-32 shrink-0 overflow-hidden rounded-md bg-muted' : 'aspect-[4/3] overflow-hidden rounded-md bg-muted'}>
+              <div key={src} className={cn('min-w-0 overflow-hidden rounded-md', compact ? 'shrink-0' : images.length > 1 ? 'max-w-[calc(50%-6px)]' : 'max-w-full')}>
                 <img
                   src={src}
                   alt=""
-                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                  className={compact ? 'block h-auto max-h-40 w-auto max-w-32 object-contain' : 'block h-auto max-h-[360px] w-auto max-w-full object-contain sm:max-h-[400px]'}
                 />
               </div>
             ))}

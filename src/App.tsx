@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route, useParams, useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/layout/Layout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -10,8 +10,8 @@ import { Loading } from '@/components/ui/Loading'
 import { useAuthStore } from '@/store/authStore'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/auth/LoginPage'
+import { EmailAuthForm } from '@/pages/auth/EmailAuthForm'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { GameDetailPage } from '@/pages/games/GameDetailPage'
 import { CommunityPage } from '@/pages/community/CommunityPage'
 import { SearchResultsPage } from '@/pages/search/SearchResultsPage'
 import { PostDetailPage } from '@/pages/community/PostDetailPage'
@@ -30,6 +30,16 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
 import { AssistantProvider } from '@/components/assistant/AssistantProvider'
 import { AssistantPage } from '@/pages/assistant/AssistantPage'
+
+function CommunityRoute() {
+  const [params] = useSearchParams()
+  return params.get('gameId') ? <CommunityPage /> : <Navigate to="/" replace />
+}
+
+function LegacyGameRedirect() {
+  const { id } = useParams<{ id: string }>()
+  return <Navigate to={id ? `/community?gameId=${encodeURIComponent(id)}` : '/community'} replace />
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,9 +77,11 @@ export default function App() {
                 <Route index element={<HomePage />} />
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
+                <Route path="forgot-password" element={<EmailAuthForm mode="reset" />} />
+                <Route path="account-migration" element={<EmailAuthForm mode="migration" />} />
                 <Route path="games" element={<Navigate to="/community" replace />} />
-                <Route path="games/:id" element={<GameDetailPage />} />
-                <Route path="community" element={<CommunityPage />} />
+                <Route path="games/:id" element={<LegacyGameRedirect />} />
+                <Route path="community" element={<CommunityRoute />} />
                 <Route path="search" element={<SearchResultsPage />} />
                 <Route path="assistant" element={<AssistantPage />} />
                 <Route path="posts/:id" element={<PostDetailPage />} />

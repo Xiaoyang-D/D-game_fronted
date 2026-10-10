@@ -23,3 +23,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Never publish runtime configuration, SQL or secrets
+.env*
+*.sql
+*.sql.*
+application*.yml
+application*.yaml
+application*.properties
+docker-compose*.yml
+docker-compose*.yaml
+compose*.yml
+compose*.yaml
+/config/
+secrets/
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore

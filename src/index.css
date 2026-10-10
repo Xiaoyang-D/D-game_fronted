@@ -25,11 +25,10 @@
     margin: 0;
     min-height: 100vh;
     background:
-      radial-gradient(circle at 12px 12px, rgba(36, 40, 44, 0.045) 1.4px, transparent 1.4px),
       linear-gradient(120deg, rgba(154, 216, 13, 0.07), transparent 28%),
       linear-gradient(240deg, rgba(23, 179, 163, 0.06), transparent 30%),
       #eef1ed;
-    background-size: 24px 24px, 100% 100%, 100% 100%, auto;
+    background-size: 100% 100%, 100% 100%, auto;
   }
 
   *:focus-visible {
@@ -48,15 +47,10 @@
 
 @layer utilities {
   .dg-pattern {
-    background-image:
-      linear-gradient(30deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
-      linear-gradient(150deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
-      linear-gradient(30deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
-      linear-gradient(150deg, rgba(30, 35, 41, 0.05) 12%, transparent 12.5%, transparent 87%, rgba(30, 35, 41, 0.05) 87.5%, rgba(30, 35, 41, 0.05)),
-      linear-gradient(60deg, rgba(30, 35, 41, 0.035) 25%, transparent 25.5%, transparent 75%, rgba(30, 35, 41, 0.035) 75%, rgba(30, 35, 41, 0.035)),
-      linear-gradient(60deg, rgba(30, 35, 41, 0.035) 25%, transparent 25.5%, transparent 75%, rgba(30, 35, 41, 0.035) 75%, rgba(30, 35, 41, 0.035));
-    background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
-    background-size: 40px 70px;
+    background:
+      linear-gradient(120deg, rgba(154, 216, 13, 0.04), transparent 45%),
+      linear-gradient(240deg, rgba(23, 179, 163, 0.04), transparent 50%),
+      #eef1ed;
   }
 }
 
@@ -83,6 +77,8 @@
   margin-top: 16px;
   align-self: center;
 }
+
+.home-navbar { width: min(1190px, calc(100% - 32px)); }
 
 .community-hero { min-height: 192px; }
 .community-columns { grid-template-columns: minmax(0, 1fr); gap: 16px; }

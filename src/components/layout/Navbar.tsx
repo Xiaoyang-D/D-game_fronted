@@ -21,7 +21,6 @@ const gameSectionIcons: Record<string, string> = {
 
 const navLinks = [
   { to: '/', label: '首页' },
-  { to: '/community', label: '全部社区' },
 ]
 
 export function Navbar() {
@@ -29,6 +28,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin } = useAuthStore()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
+  const [hoveredNav, setHoveredNav] = useState<'home' | 'sections' | null>(null)
   const [gamesPage, setGamesPage] = useState(1)
   const location = useLocation()
   const headerRef = useRef<HTMLElement>(null)
@@ -56,6 +56,7 @@ export function Navbar() {
   }, [])
   const selectedGameId = new URLSearchParams(location.search).get('gameId')
   const sectionsActive = (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
+  const highlightedNav = hoveredNav ?? (sectionsOpen || sectionsActive ? 'sections' : location.pathname === '/' ? 'home' : null)
   const { data: games, isLoading: gamesLoading, isError: gamesError, refetch: reloadGames } = useQuery({
     queryKey: ['nav-game-sections', gamesPage],
     queryFn: () => getGames({ page: gamesPage, size: 12 }),
@@ -108,11 +109,11 @@ export function Navbar() {
   return (
     <header ref={headerRef} onClick={(event) => { if ((event.target as HTMLElement).closest('a')) closeMenus() }} className={cn(
       'sticky z-40 bg-[#333333] shadow-[0_8px_24px_rgba(0,0,0,0.15)]',
-      (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
-        ? 'community-navbar rounded-2xl'
+      (location.pathname === '/' || location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
+        ? cn('community-navbar rounded-2xl', location.pathname === '/' && 'home-navbar')
         : 'top-0',
     )}>
-      <div className={cn('mx-auto flex max-w-[1500px] items-center gap-4 px-5 sm:px-8', (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname)) ? 'h-[68px]' : 'h-20')}>
+      <div className={cn('mx-auto flex max-w-[1500px] items-center gap-4 px-5 sm:px-8', (location.pathname === '/' || location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname)) ? 'h-[68px]' : 'h-20')}>
         <Link to="/" onClick={closeMenus} className="flex min-w-0 shrink-0 items-center gap-2 cursor-pointer">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-[#2d2d2d]">
             <Gamepad2 className="h-6 w-6" />
@@ -120,18 +121,19 @@ export function Navbar() {
           <span className="text-lg font-black tracking-tight text-white">D-Game</span>
         </Link>
 
-        <nav className="hidden h-full items-center gap-1 lg:flex">
+        <nav className="hidden h-full items-center gap-1 lg:flex" onPointerLeave={() => setHoveredNav(null)}>
           {navLinks.filter((link) => link.to === '/').map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end
               onClick={closeMenus}
-              className={({ isActive }) =>
+              onPointerEnter={(event) => { if (event.pointerType === 'mouse') { setHoveredNav('home'); closeMenus() } }}
+              className={() =>
                 cn(
                   'relative flex h-full items-center px-4 text-xl font-black transition-colors duration-200 cursor-pointer',
-                  isActive ? 'text-white' : 'text-white/55 hover:text-white',
-                  isActive &&
+                  highlightedNav === 'home' ? 'text-white' : 'text-white/55 hover:text-white',
+                  (highlightedNav === 'home') &&
                     'after:absolute after:bottom-0 after:left-4 after:right-4 after:h-1 after:rounded-t-full after:bg-primary',
                 )
               }
@@ -144,11 +146,11 @@ export function Navbar() {
             type="button"
             aria-expanded={sectionsOpen}
             aria-controls="game-sections-panel"
-            onPointerEnter={(event) => { if (event.pointerType === 'mouse') openSectionsOnHover() }}
+            onPointerEnter={(event) => { if (event.pointerType === 'mouse') { setHoveredNav('sections'); openSectionsOnHover() } }}
             onPointerLeave={(event) => { if (event.pointerType === 'mouse') scheduleSectionsClose() }}
             onClick={() => { cancelSectionsClose(); setSectionsOpen(!sectionsOpen) }}
-            className={cn('relative flex h-full items-center gap-2 px-4 text-xl font-black transition-colors',
-              sectionsActive || sectionsOpen ? 'text-white after:absolute after:bottom-0 after:left-6 after:right-6 after:h-1 after:rounded-full after:bg-primary' : 'text-white/60 hover:text-white')}
+            className={cn('relative flex h-full cursor-pointer items-center gap-2 px-4 text-xl font-black transition-colors duration-200 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-4px]',
+              highlightedNav === 'sections' ? 'text-white after:absolute after:bottom-0 after:left-6 after:right-6 after:h-1 after:rounded-full after:bg-primary' : 'text-white/60 hover:text-white')}
           >
             版区 <ChevronDown className={cn('h-5 w-5 rounded-full bg-white/5 transition-transform', sectionsOpen && 'rotate-180')} />
           </button>
@@ -232,7 +234,6 @@ export function Navbar() {
             <div className="mb-5 flex items-center justify-between text-sm">
               <span className="font-semibold text-white/40">选择你感兴趣的游戏版区</span>
               <div className="flex gap-5">
-                <Link to="/community" onClick={closeMenus} className="text-white/70 hover:text-primary">全部社区</Link>
               </div>
             </div>
             {gamesLoading ? <p className="py-8 text-center text-white/50">正在加载版区…</p> : gamesError ? (

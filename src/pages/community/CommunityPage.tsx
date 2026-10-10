@@ -1,12 +1,13 @@
-import { useState } from 'react'
+
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, BookOpen, ChevronRight, FileText, Gamepad2, Layers3, MessageSquare, PenSquare, Search, Sparkles, Megaphone, Swords, Handshake, Palette, Camera } from 'lucide-react'
+import { ArrowUpRight, BookOpen, ChevronRight, Gamepad2, Layers3, MessageSquare, PenSquare, Sparkles, Megaphone, Swords, Handshake, Palette, Camera } from 'lucide-react'
 import { getBoards, getPosts } from '@/api/post'
 import { getGame } from '@/api/game'
-import { Button } from '@/components/ui/Button'
+
+import { PublishCard } from '@/components/community/PublishCard'
 import { PostCard } from '@/components/community/PostCard'
-import { Input } from '@/components/ui/Input'
+
 import { Loading } from '@/components/ui/Loading'
 import { Empty } from '@/components/ui/Empty'
 import { Pagination } from '@/components/ui/Pagination'
@@ -18,27 +19,21 @@ export function CommunityPage() {
   const gameId = searchParams.get('gameId') || undefined
   const boardId = searchParams.get('boardId') || undefined
   const recommended = !boardId && searchParams.get('section') !== 'forum'
+  const sortParam = searchParams.get('sort')
+  const sort = sortParam === 'LATEST' || sortParam === 'LATEST_REPLY' ? sortParam : 'DEFAULT'
   const { data: boards } = useQuery({ queryKey: ['boards'], queryFn: getBoards })
-  const [keyword, setKeyword] = useState('')
+
   const searchKeyword = searchParams.get('keyword') || ''
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const { data: game } = useQuery({ queryKey: ['game', gameId], queryFn: () => getGame(gameId!), enabled: Boolean(gameId) })
   const { data, isLoading, error } = useQuery({
-    queryKey: ['posts', { boardId, gameId, recommended, keyword: searchKeyword, page, size: 10 }],
-    queryFn: () => getPosts({ boardId, gameId, recommended, keyword: searchKeyword || undefined, page, size: 10 }),
+    queryKey: ['posts', { boardId, gameId, recommended, sort, keyword: searchKeyword, page, size: 10 }],
+    queryFn: () => getPosts({ boardId, gameId, recommended, sort, keyword: searchKeyword || undefined, page, size: 10 }),
   })
   function setPage(nextPage: number) {
     setSearchParams(previous => {
       const next = new URLSearchParams(previous)
       if (nextPage > 1) next.set('page', String(nextPage)); else next.delete('page')
-      return next
-    })
-  }
-  function search() {
-    setSearchParams(previous => {
-      const next = new URLSearchParams(previous)
-      next.delete('page')
-      if (keyword.trim()) next.set('keyword', keyword.trim()); else next.delete('keyword')
       return next
     })
   }
@@ -76,10 +71,10 @@ export function CommunityPage() {
               const selected = section.id ? boardId === String(section.id) : recommended
               const Icon = section.Icon
               return <button key={section.name} type="button" aria-current={selected ? 'page' : undefined} onClick={() => {
-                setKeyword('')
+
                 setSearchParams(previous => {
                 const next = new URLSearchParams(previous)
-                next.delete('page'); next.delete('keyword')
+                next.delete('page'); next.delete('keyword'); next.delete('sort')
                 if (section.id) { next.set('boardId', String(section.id)); next.set('section', 'forum') }
                 else { next.delete('boardId'); next.delete('section') }
                 return next
@@ -91,6 +86,17 @@ export function CommunityPage() {
         </aside>
 
         <div className="min-w-0">
+          {!recommended && <section className="rounded-2xl bg-white p-4 shadow-sm" aria-label="分区横幅">
+            <div className={`relative flex min-h-40 items-center justify-between gap-4 overflow-hidden rounded-xl px-6 py-5 ${isEndfield ? 'bg-[#f1f6d8]' : 'bg-[#e5f4f2]'}`}>
+              <div className="relative z-10">
+                <p className="text-xs font-bold tracking-widest text-text-secondary">{englishName}</p>
+                <h2 className="mt-3 text-2xl font-black text-text">{boards?.find(board => String(board.id) === boardId)?.name || '论坛'}</h2>
+                <p className="mt-2 text-sm text-text-secondary">分享你的创作，发现同好的精彩内容</p>
+              </div>
+              <img src={icon} alt="" className="h-28 w-28 shrink-0 rounded-2xl object-contain" />
+            </div>
+          </section>}
+
           {recommended && <section id="community-highlights" className="scroll-mt-24 rounded-2xl bg-white p-5 shadow-sm">
             <div className={`relative overflow-hidden rounded-xl p-6 ${isEndfield ? 'bg-[#f1f6d8]' : 'bg-[#e5f4f2]'}`}>
               <Sparkles className="absolute -right-3 -top-3 h-28 w-28 text-primary/15" />
@@ -100,25 +106,27 @@ export function CommunityPage() {
             </div>
             <div className="mt-3 divide-y divide-border">{data?.records.slice(0, 3).map(post => <Link key={post.id} to={`/posts/${post.id}`} className="flex items-center gap-3 py-3 text-sm hover:text-primary"><span className="shrink-0 rounded border border-primary/30 px-2 py-0.5 text-xs text-primary">动态</span><span className="truncate">{post.title}</span><ChevronRight className="ml-auto h-4 w-4 shrink-0" /></Link>)}</div>
           </section>}
-          <section id="community-feed" className="mt-5 scroll-mt-24">
-            <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black text-text">{boardId ? boards?.find(board => String(board.id) === boardId)?.name || '分区帖子' : '推荐帖子'}</h2><span className="text-xs text-text-secondary">{data?.total ?? 0} 篇内容</span></div>
-              <form onSubmit={event => { event.preventDefault(); search() }} className="flex gap-2"><Input aria-label="搜索版区帖子" placeholder={searchKeyword || '搜索版区内的帖子...'} value={keyword} onChange={event => setKeyword(event.target.value)} /><Button type="submit"><Search className="h-4 w-4" /><span className="hidden sm:inline">搜索</span></Button></form>
-            </div>
-            {isLoading ? <Loading /> : error ? <div className="rounded-2xl bg-white p-6 text-red-600">{error.message}</div> : data?.records.length ? <><div className="flex flex-col gap-4">{data.records.map(post => <PostCard key={post.id} post={post} className="rounded-2xl" />)}</div><Pagination page={page} size={10} total={data.total} onChange={setPage} /></> : <div className="rounded-2xl bg-white p-8 shadow-sm"><Empty title="暂无帖子" description={searchKeyword ? '试试其他关键词' : '分享你的第一篇游戏心得吧'} /><Link to={publishUrl} className="mx-auto mt-2 flex w-fit items-center gap-2 text-sm font-bold text-primary"><PenSquare className="h-4 w-4" />发布帖子</Link></div>}
+          <section id="community-feed" className={`mt-4 scroll-mt-24 ${!recommended ? 'rounded-2xl bg-white p-5 shadow-sm' : ''}`}>
+            {!recommended && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <h2 className="text-sm font-bold text-text">排序</h2>
+              <div className="flex rounded-full bg-muted p-1" role="group" aria-label="帖子排序">
+                {([{ value: 'DEFAULT', label: '默认' }, { value: 'LATEST', label: '最新发布' }, { value: 'LATEST_REPLY', label: '最新回复' }] as const).map(option => <button key={option.value} type="button" aria-pressed={sort === option.value} onClick={() => setSearchParams(previous => {
+                  const next = new URLSearchParams(previous)
+                  next.set('sort', option.value); next.delete('page')
+                  return next
+                })} className={`rounded-full px-3 py-1.5 text-xs transition-colors ${sort === option.value ? 'bg-white font-bold text-text shadow-sm' : 'text-text-secondary hover:text-text'}`}>{option.label}</button>)}
+              </div>
+            </div>}
+            {isLoading ? <Loading /> : error ? <div className="rounded-2xl bg-white p-6 text-red-600">{error.message}</div> : data?.records.length ? <><div className="flex flex-col gap-4">{data.records.map(post => <PostCard key={post.id} post={post} className={recommended ? 'rounded-2xl' : 'rounded-none px-0 shadow-none hover:shadow-none border-b border-border last:border-0'} />)}</div><Pagination page={page} size={10} total={data.total} onChange={setPage} /></> : <div className="rounded-2xl bg-white p-8 shadow-sm"><Empty title="暂无帖子" description={searchKeyword ? '试试其他关键词' : '分享你的第一篇游戏心得吧'} /><Link to={publishUrl} className="mx-auto mt-2 flex w-fit items-center gap-2 text-sm font-bold text-primary"><PenSquare className="h-4 w-4" />发布帖子</Link></div>}
           </section>
         </div>
 
         <aside className="community-tools flex flex-col gap-4">
-          <section className="rounded-2xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-text">作品发布 <span className="text-sm text-text-secondary/40">POST<span className="text-primary">.</span></span></h2>
-            <Link to={publishUrl} className="mt-6 flex flex-col items-center gap-3 rounded-xl bg-primary/5 py-5 text-sm font-bold text-primary hover:bg-primary/10"><PenSquare className="h-9 w-9" />发布图文</Link>
-            <Link to="/posts/manage?tab=draft" className="mt-4 flex items-center justify-center gap-2 border-t border-border pt-4 text-sm text-text-secondary hover:text-primary"><FileText className="h-4 w-4" />草稿箱</Link>
-          </section>
+          <PublishCard publishUrl={publishUrl} />
           <section className="rounded-2xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-black text-text">快捷入口 <span className="text-sm text-text-secondary/40">TOOLS<span className="text-primary">.</span></span></h2>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              {gameId && <Link to={`/games/${gameId}`} className="flex flex-col items-center gap-3 rounded-xl bg-muted/50 px-2 py-4 text-xs text-text-secondary hover:bg-primary/10"><Gamepad2 className="h-7 w-7 text-primary" />游戏资料</Link>}
+              {gameId && <Link to={`/community?gameId=${gameId}`} className="flex flex-col items-center gap-3 rounded-xl bg-muted/50 px-2 py-4 text-xs text-text-secondary hover:bg-primary/10"><Gamepad2 className="h-7 w-7 text-primary" />游戏版区</Link>}
               <Link to="/assistant" className="flex flex-col items-center gap-3 rounded-xl bg-muted/50 px-2 py-4 text-xs text-text-secondary hover:bg-primary/10"><Sparkles className="h-7 w-7 text-primary" />游戏助手</Link>
               <Link to="/posts/manage" className="flex flex-col items-center gap-3 rounded-xl bg-muted/50 px-2 py-4 text-xs text-text-secondary hover:bg-primary/10"><BookOpen className="h-7 w-7 text-primary" />发布管理</Link>
             </div>

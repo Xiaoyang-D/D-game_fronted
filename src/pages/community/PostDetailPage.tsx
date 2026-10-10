@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Bell,
-  Eye,
   Flag,
   Gamepad2,
   Heart,
@@ -21,7 +20,6 @@ import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
 import { getUserProfile } from '@/api/user'
-import { PostImageGallery, postTextWithoutImages } from '@/components/community/PostImageGallery'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -338,54 +336,23 @@ export function PostDetailPage() {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <main className="min-w-0">
           <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <PostImageGallery key={post.id} content={post.content} />
             <header className="border-b border-border pb-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <Link
-                  to={`/community?boardId=${post.boardId}${post.gameId ? `&gameId=${post.gameId}` : ''}`}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/20"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  {post.boardName}
-                </Link>
-                <time className="text-xs text-text-secondary">发布于 {formatDateTime(post.gmtCreate)}</time>
-              </div>
-              <h1 className="mt-3 break-words text-2xl font-black leading-tight text-text">{post.title}</h1>
-              {post.gameId && post.gameName && (
-                <Link
-                  to={`/community?gameId=${post.gameId}`}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-text-secondary hover:text-primary"
-                >
-                  <Gamepad2 className="h-4 w-4 text-primary" />
-                  {post.gameName}
-                </Link>
-              )}
-              {(post.topics?.length || post.isOriginal || post.containsAiGenerated) ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {post.topics?.map((topic) => (
-                    <span key={topic.id} className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-text-secondary">#{topic.name}</span>
-                  ))}
-                  {post.isOriginal && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">原创</span>}
-                  {post.containsAiGenerated && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">含 AI 生成内容</span>}
-                </div>
-              ) : null}
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-text-secondary">
-                <span className="inline-flex items-center gap-1.5"><Eye className="h-4 w-4" />{post.viewCount}</span>
-                <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-4 w-4" />{post.commentCount}</span>
-                <span className="inline-flex items-center gap-1.5"><ThumbsUp className="h-4 w-4" />{post.likeCount}</span>
-                <span className="inline-flex items-center gap-1.5"><Heart className="h-4 w-4" />{post.favoriteCount}</span>
+              <h1 className="break-words text-2xl font-black leading-tight text-text">{post.title}</h1>
+              <div className="mt-4 flex items-center justify-between gap-3 text-xs text-text-secondary">
+                <span className="rounded bg-muted px-2 py-1">图文</span>
+                <time dateTime={post.gmtCreate}>{formatDateTime(post.gmtCreate)}</time>
               </div>
             </header>
 
             <div
-              className="mt-8 break-words text-[15px] leading-8 text-text-secondary [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:bg-muted [&_blockquote]:px-4 [&_blockquote]:py-3 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:leading-tight [&_h1]:text-text [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:leading-tight [&_h2]:text-text [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text [&_img]:my-6 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
-              dangerouslySetInnerHTML={{ __html: postTextWithoutImages(post.content) }}
+              className="mt-4 break-words text-[15px] leading-8 text-text [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:bg-muted [&_blockquote]:px-4 [&_blockquote]:py-3 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:leading-tight [&_h1]:text-text [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:leading-tight [&_h2]:text-text [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text [&_img]:my-3 [&_img]:h-auto [&_img]:w-full [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
+              dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
-            <footer className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
+            <footer className="mt-10 flex flex-wrap items-center justify-center gap-4 py-4">
               <Button
-                variant={liked ? 'primary' : 'outline'}
-                className="rounded-full"
+                variant={liked ? 'primary' : 'ghost'}
+                className={cn('min-w-28 rounded-full px-6 py-3', !liked && 'bg-muted')}
                 onClick={toggleLike}
                 loading={statusLoading || likeLoading}
                 title={liked ? '取消点赞' : '点赞'}
@@ -395,15 +362,15 @@ export function PostDetailPage() {
                 {post.likeCount}
               </Button>
               <Button
-                variant={favorited ? 'primary' : 'outline'}
-                className="rounded-full"
+                variant={favorited ? 'primary' : 'ghost'}
+                className={cn('min-w-28 rounded-full px-6 py-3', !favorited && 'bg-muted')}
                 onClick={toggleFavorite}
                 loading={statusLoading || favoriteLoading}
                 title={favorited ? '取消收藏' : '收藏'}
                 aria-label={favorited ? '取消收藏' : '收藏'}
               >
                 <Heart className="h-4 w-4" />
-                {post.favoriteCount}
+                {favorited ? '已收藏' : '收藏'}
               </Button>
               <Button
                 variant="ghost"

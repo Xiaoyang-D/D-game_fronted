@@ -40,12 +40,12 @@ export function getStoredAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY)
 }
 
-function getRefreshToken(): string | null {
+export function getStoredRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
 async function refreshAccessToken(): Promise<void> {
-  const refreshToken = getRefreshToken()
+  const refreshToken = getStoredRefreshToken()
   const response = await axios.post<Result<TokenPayload>>(`${API_BASE_URL}/auth/refresh`, refreshToken ? { refreshToken } : undefined, {
     withCredentials: true,
   })

@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/Toast'
 import { useAuthStore } from '@/store/authStore'
 
 const schema = z.object({
-  username: z.string().min(3, '用户名至少 3 个字符'),
+  email: z.string().trim().email('请输入有效邮箱'),
   password: z.string().min(6, '密码至少 6 个字符'),
 })
 
@@ -27,7 +27,7 @@ export function LoginPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { username: '', password: '' },
+    defaultValues: { email: '', password: '' },
   })
 
   const onSubmit = async (data: FormData) => {
@@ -54,10 +54,14 @@ export function LoginPage() {
           <p className="text-sm text-text-secondary">欢迎回到游戏社区</p>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <Input label="用户名" error={errors.username?.message} {...register('username')} />
+          <Input label="邮箱" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
           <Input label="密码" type="password" error={errors.password?.message} {...register('password')} />
           <Button type="submit" loading={loading} className="w-full">登录</Button>
         </form>
+        <div className="mt-4 flex justify-between text-sm text-primary">
+          <Link to="/forgot-password">忘记密码</Link>
+          <Link to="/account-migration">旧账号绑定邮箱</Link>
+        </div>
         <p className="mt-4 text-center text-sm text-text-secondary">
           还没有账号？{' '}
           <Link to="/register" className="font-medium text-primary hover:text-primary-hover cursor-pointer">

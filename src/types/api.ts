@@ -27,6 +27,7 @@ export interface UserResp {
   username: string
   nickname: string
   email: string | null
+  emailVerifiedAt?: string | null
   mobile: string | null
   avatarUrl: string | null
   bio: string
@@ -278,21 +279,19 @@ export interface SysRole {
 }
 
 export interface LoginReq {
-  username: string
+  email: string
   password: string
 }
 
 export interface RegisterReq {
-  username: string
+  email: string
+  code: string
   password: string
-  nickname?: string
-  email?: string
-  mobile?: string
+  nickname: string
 }
 
 export interface UpdateProfileReq {
   nickname?: string
-  email?: string
   mobile?: string
   avatarUrl?: string
   bio?: string
@@ -388,6 +387,7 @@ export interface GamesQuery {
 }
 
 export interface PostsQuery {
+  sort?: 'DEFAULT' | 'LATEST' | 'LATEST_REPLY'
   recommended?: boolean
   boardId?: Id
   authorId?: Id

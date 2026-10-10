@@ -1,4 +1,4 @@
-﻿import { type ComponentType, useMemo } from 'react'
+import { type ComponentType, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, Heart, PenSquare, ThumbsUp, UserRoundPlus, Users, Gamepad2 } from 'lucide-react'
@@ -70,7 +70,7 @@ function StatTile({ label, value, icon: Icon }: { label: string; value: string |
 function FavoriteGameCard({ item }: { item: UserFavoriteResp }) {
   return (
     <Link
-      to={`/games/${item.targetId}`}
+      to={`/community?gameId=${item.targetId}`}
       className="block rounded-lg border border-border bg-white p-4 shadow-sm transition-colors duration-200 hover:border-primary/40 hover:shadow-md"
     >
       <div className="mb-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black tracking-wide text-emerald-700">

@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils'
 
 const schema = z.object({
   nickname: z.string().trim().min(1, '请输入昵称').max(64, '昵称最多 64 个字符'),
-  email: z.string().email('邮箱格式不正确').or(z.literal('')),
   mobile: z.string(),
   bio: z.string().max(500, '简介最多 500 个字符'),
 })
@@ -36,7 +35,7 @@ export function ProfilePage() {
     resolver: zodResolver(schema),
     defaultValues: {
       nickname: user?.nickname || user?.username || '',
-      email: user?.email || '', mobile: user?.mobile || '', bio: user?.bio || '',
+      mobile: user?.mobile || '', bio: user?.bio || '',
     },
   })
   const nickname = watch('nickname')
@@ -70,7 +69,7 @@ export function ProfilePage() {
     setLoading(true)
     try {
       const updated = await updateProfile(privacy
-        ? { email: data.email || undefined, mobile: data.mobile || undefined }
+        ? { mobile: data.mobile || undefined }
         : { nickname: data.nickname, bio: data.bio })
       setUser(updated)
       refreshProfile()
@@ -127,7 +126,7 @@ export function ProfilePage() {
                 </div>
                 <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-4">
                   <span className="text-sm font-semibold sm:pt-1 sm:text-right">用户名</span>
-                  <div className="text-sm text-text-secondary">{user.username}<p className="mt-2 text-xs text-text-secondary/60">用于登录的账号名称</p></div>
+                  <div className="text-sm text-text-secondary">{user.username}<p className="mt-2 text-xs text-text-secondary/60">系统账号标识，登录请使用邮箱</p></div>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-4">
                   <label htmlFor="settings-bio" className="text-sm font-semibold sm:pt-3 sm:text-right">个人简介</label>
@@ -145,7 +144,10 @@ export function ProfilePage() {
                 <p className="mt-3 text-sm leading-7 text-text-secondary">头像、昵称、简介和社区互动会展示在个人主页；邮箱和手机号不会展示在公开主页。</p>
                 <Link to={`/users/${user.id}`} className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">查看我的主页</Link>
               </div>
-              <Input label="邮箱" id="settings-email" type="email" placeholder="输入邮箱" error={errors.email?.message} {...register('email')} />
+              <div className="text-sm"><p>邮箱：{user.email || '未绑定'}</p>
+                <p className="mt-2 text-text-secondary">{user.emailVerifiedAt ? '已验证，暂不支持更换' : '未验证，请通过旧账号绑定邮箱入口完成验证'}</p>
+                {!user.emailVerifiedAt && <Link to="/account-migration" className="text-primary">验证并绑定邮箱</Link>}
+              </div>
               <Input label="手机号码" id="settings-mobile" type="tel" placeholder="输入手机号码" error={errors.mobile?.message} {...register('mobile')} />
               <p className="text-xs text-text-secondary">保存空白联系方式将保留原值。</p>
             </div>
