@@ -8,3 +8,7 @@ export async function getComments(params: CommentsQuery): Promise<PageResult<Com
 export async function createComment(data: CreateCommentReq): Promise<Id> {
   return api.post<Id>('/comments', data)
 }
+
+export async function deleteComment(commentId: Id): Promise<void> {
+  await api.delete<void>(`/comments/${commentId}`)
+}

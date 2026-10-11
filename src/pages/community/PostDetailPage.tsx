@@ -11,11 +11,12 @@ import {
   PenSquare,
   Search,
   ThumbsUp,
+  Trash2,
   UserCheck,
   UserRoundPlus,
   Users,
 } from 'lucide-react'
-import { createComment, getComments } from '@/api/comment'
+import { createComment, deleteComment, getComments } from '@/api/comment'
 import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
@@ -32,8 +33,9 @@ import { useInteraction } from '@/hooks/useInteraction'
 import { CONTENT_STATUS, TARGET_TYPE } from '@/lib/constants'
 import { cn, formatDateTime, getContentStatusLabel, isApprovedPost, isValidId } from '@/lib/utils'
 import { buildCommentThreads } from '@/lib/commentThreads'
+import { canDeleteComment, getCommentDeletionMessage, getCommentPageAfterDeletion, isReplyTargetDeleted, refreshCommentDeletionQueries } from '@/lib/commentDeletion'
 import { useAuthStore } from '@/store/authStore'
-import type { CommentResp, CommentSort, PostResp } from '@/types/api'
+import type { CommentResp, CommentSort, Id, PageResult, PostResp } from '@/types/api'
 
 const COMMENT_PAGE_SIZE = 20
 
@@ -55,13 +57,19 @@ function CommentItem({
   nested = false,
   replyToName,
   onReply,
+  postAuthorId,
+  onDelete,
+  deletingId,
 }: {
   comment: CommentResp
   nested?: boolean
   replyToName?: string
   onReply: (comment: CommentResp) => void
+  postAuthorId: Id
+  onDelete: (comment: CommentResp) => void
+  deletingId: Id | null
 }) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user, isAdmin } = useAuthStore()
   const authorName = comment.userNickname || '用户'
 
   return (
@@ -96,6 +104,18 @@ function CommentItem({
             >
               <MessageCircle className="h-3.5 w-3.5" />
               回复
+            </button>
+          )}
+          {isAuthenticated && canDeleteComment(user?.id, comment.userId, postAuthorId, isAdmin()) && (
+            <button
+              type="button"
+              onClick={() => onDelete(comment)}
+              disabled={deletingId !== null}
+              aria-label={`删除 ${authorName} 的评论`}
+              className="inline-flex items-center gap-1 transition-colors duration-200 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deletingId === comment.id ? '删除中...' : '删除'}
             </button>
           )}
         </footer>
@@ -234,6 +254,7 @@ export function PostDetailPage() {
   const [commentSort, setCommentSort] = useState<CommentSort>('DEFAULT')
   const [content, setContent] = useState('')
   const [replyTo, setReplyTo] = useState<CommentResp | null>(null)
+  const [deletingId, setDeletingId] = useState<Id | null>(null)
 
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['post', postId],
@@ -272,6 +293,30 @@ export function PostDetailPage() {
     },
     onError: (err: Error) => toast(err.message, 'error'),
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: (comment: CommentResp) => deleteComment(comment.id),
+    onSuccess: async (_result, comment) => {
+      toast('评论已删除')
+      const cachedComments = queryClient.getQueriesData<PageResult<CommentResp>>({ queryKey: ['comments', postId] })
+        .flatMap(([, data]) => data?.records || [])
+      setReplyTo(current => isReplyTargetDeleted(current, comment, cachedComments) ? null : current)
+      await refreshCommentDeletionQueries(queryClient, postId!)
+      setCommentPage(currentPage => {
+        const refreshed = queryClient.getQueryData<PageResult<CommentResp>>(['comments', postId, currentPage, commentSort])
+        return refreshed ? getCommentPageAfterDeletion(currentPage, refreshed.total, COMMENT_PAGE_SIZE) : currentPage
+      })
+    },
+    onError: (err: Error) => toast(err.message, 'error'),
+    onSettled: () => setDeletingId(null),
+  })
+
+  const removeComment = (comment: CommentResp) => {
+    if (deletingId !== null || deleteMutation.isPending) return
+    if (!window.confirm(getCommentDeletionMessage(comment))) return
+    setDeletingId(comment.id)
+    deleteMutation.mutate(comment)
+  }
 
   const reportPost = async () => {
     if (!isAuthenticated || !post) {
@@ -450,10 +495,10 @@ export function PostDetailPage() {
                   <div className="divide-y divide-border">
                     {commentThreads.map((thread) => (
                       <div key={thread.root.comment.id}>
-                        <CommentItem {...thread.root} onReply={setReplyTo} />
+                        <CommentItem {...thread.root} onReply={setReplyTo} postAuthorId={post.userId} onDelete={removeComment} deletingId={deletingId} />
                         {thread.replies.map((reply) => (
                           <div key={reply.comment.id} className="ml-6 border-l-2 border-primary/20 pl-4 sm:ml-12">
-                            <CommentItem {...reply} nested onReply={setReplyTo} />
+                            <CommentItem {...reply} nested onReply={setReplyTo} postAuthorId={post.userId} onDelete={removeComment} deletingId={deletingId} />
                           </div>
                         ))}
                       </div>
