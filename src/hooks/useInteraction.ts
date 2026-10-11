@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { favorite, getInteractionStatus, like, unfavorite, unlike } from '@/api/interaction'
 import { useToast } from '@/components/ui/Toast'
 import { useAuthStore } from '@/store/authStore'
 import type { Id } from '@/types/api'
+import { refreshInteractionQueries } from '@/lib/interactionQueries'
 
 export function useInteraction(targetType: number, targetId: Id) {
   const { isAuthenticated } = useAuthStore()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [liked, setLiked] = useState(false)
   const [favorited, setFavorited] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
@@ -88,11 +91,15 @@ export function useInteraction(targetType: number, targetId: Id) {
         await unlike({ targetType, targetId })
         if (scopeVersion !== scopeVersionRef.current) return
         setLiked(false)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
+        if (scopeVersion !== scopeVersionRef.current) return
         toast('已取消点赞')
       } else {
         await like({ targetType, targetId })
         if (scopeVersion !== scopeVersionRef.current) return
         setLiked(true)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
+        if (scopeVersion !== scopeVersionRef.current) return
         toast('点赞成功')
       }
     } catch (err) {
@@ -100,8 +107,10 @@ export function useInteraction(targetType: number, targetId: Id) {
       const msg = err instanceof Error ? err.message : '操作失败'
       if (msg.includes('已点赞')) {
         setLiked(true)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
       } else if (msg.includes('未点赞')) {
         setLiked(false)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
       } else {
         toast(msg, 'error')
       }
@@ -125,11 +134,15 @@ export function useInteraction(targetType: number, targetId: Id) {
         await unfavorite({ targetType, targetId })
         if (scopeVersion !== scopeVersionRef.current) return
         setFavorited(false)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
+        if (scopeVersion !== scopeVersionRef.current) return
         toast('已取消收藏')
       } else {
         await favorite({ targetType, targetId })
         if (scopeVersion !== scopeVersionRef.current) return
         setFavorited(true)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
+        if (scopeVersion !== scopeVersionRef.current) return
         toast('收藏成功')
       }
     } catch (err) {
@@ -137,8 +150,10 @@ export function useInteraction(targetType: number, targetId: Id) {
       const msg = err instanceof Error ? err.message : '操作失败'
       if (msg.includes('已收藏')) {
         setFavorited(true)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
       } else if (msg.includes('未收藏')) {
         setFavorited(false)
+        await refreshInteractionQueries(queryClient, targetType, targetId)
       } else {
         toast(msg, 'error')
       }

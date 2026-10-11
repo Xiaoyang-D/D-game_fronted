@@ -7,11 +7,9 @@ import {
   CalendarCheck,
   ChevronLeft,
   ChevronRight,
-  Gamepad2,
   Heart,
   MessageSquare,
   Search,
-  Star,
   Trophy,
   Users,
   Wrench,
@@ -25,7 +23,6 @@ import { PostCard } from '@/components/community/PostCard'
 import { Loading } from '@/components/ui/Loading'
 import { Empty } from '@/components/ui/Empty'
 import { useAuthStore } from '@/store/authStore'
-import { formatRating } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { GameResp } from '@/types/api'
 
@@ -180,49 +177,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-lg bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-black text-text">
-              最新游戏<span className="ml-1 text-sm text-border">GAMES_</span>
-            </h2>
-            <Link to="/community" className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-hover">
-              查看全部 <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          {gamesLoading ? (
-            <div className="mt-5">
-              <Loading />
-            </div>
-          ) : games && games.records.length > 0 ? (
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {games.records.slice(0, 4).map((game) => (
-                <Link key={game.id} to={`/community?gameId=${game.id}`} className="group flex gap-3 rounded-md border border-border p-3 hover:border-primary/50">
-                  <div className="h-20 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
-                    {game.coverUrl ? (
-                      <img src={game.coverUrl} alt={game.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <Gamepad2 className="h-7 w-7 text-border" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="line-clamp-1 font-black text-text group-hover:text-primary">{game.name}</h3>
-                    <p className="mt-1 text-xs text-text-secondary">{game.categoryName}</p>
-                    <p className="mt-2 flex items-center gap-1 text-sm font-bold text-amber-600">
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      {formatRating(game.avgRating)} ({game.ratingCount})
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-5">
-              <Empty title="暂无游戏" />
-            </div>
-          )}
-        </section>
+
       </main>
 
       <aside className="hidden lg:block">
