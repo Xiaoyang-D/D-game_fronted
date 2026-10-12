@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Bell,
@@ -16,7 +16,7 @@ import {
   UserRoundPlus,
   Users,
 } from 'lucide-react'
-import { createComment, deleteComment, getComments } from '@/api/comment'
+import { createComment, deleteComment, getComments, getCommentLocation } from '@/api/comment'
 import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
@@ -27,7 +27,8 @@ import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
 import { Loading } from '@/components/ui/Loading'
 import { Pagination } from '@/components/ui/Pagination'
-import { Textarea } from '@/components/ui/Textarea'
+import { MentionTextarea, MentionText } from '@/components/messages/MentionTextarea'
+import type { Mention } from '@/types/messages'
 import { useToast } from '@/components/ui/Toast'
 import { useInteraction } from '@/hooks/useInteraction'
 import { CONTENT_STATUS, TARGET_TYPE } from '@/lib/constants'
@@ -73,7 +74,7 @@ function CommentItem({
   const authorName = comment.userNickname || '用户'
 
   return (
-    <article className={cn('flex gap-3 py-5', nested && 'py-4')}>
+    <article id={`comment-${comment.id}`} className={cn('flex scroll-mt-24 gap-3 py-5 target:rounded-lg target:bg-primary/10', nested && 'py-4')}>
       <Link to={`/users/${comment.userId}`} className="shrink-0" aria-label={`查看 ${authorName} 的主页`}>
         <Avatar
           src={comment.userAvatarUrl}
@@ -90,7 +91,7 @@ function CommentItem({
           <time className="text-xs text-text-secondary">{formatDateTime(comment.gmtCreate)}</time>
         </div>
         {replyToName && <p className="mt-2 text-xs text-text-secondary">回复 @{replyToName}</p>}
-        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-text-secondary">{comment.content}</p>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-text-secondary"><MentionText content={comment.content} mentions={comment.mentions} /></p>
         <footer className="mt-3 flex items-center gap-4 text-xs font-semibold text-text-secondary">
           <span className="inline-flex items-center gap-1">
             <ThumbsUp className="h-3.5 w-3.5" />
@@ -246,6 +247,7 @@ function CommunityTools() {
 
 export function PostDetailPage() {
   const { id: postId } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -253,8 +255,20 @@ export function PostDetailPage() {
   const [commentPage, setCommentPage] = useState(1)
   const [commentSort, setCommentSort] = useState<CommentSort>('DEFAULT')
   const [content, setContent] = useState('')
+  const [mentions, setMentions] = useState<Mention[]>([])
   const [replyTo, setReplyTo] = useState<CommentResp | null>(null)
   const [deletingId, setDeletingId] = useState<Id | null>(null)
+  const located = useQuery({ queryKey: ['comment-location', searchParams.get('commentId')], queryFn: () => getCommentLocation(searchParams.get('commentId')!), enabled: !!searchParams.get('commentId') })
+  useEffect(() => {
+    if (located.error) toast('内容已删除或暂不可见', 'error')
+  }, [located.error, toast])
+  useEffect(() => {
+    const location = located.data
+    if (location && location.postId === postId) {
+      const frame = requestAnimationFrame(() => { setCommentSort('DEFAULT'); setCommentPage(location.page) })
+      return () => cancelAnimationFrame(frame)
+    }
+  }, [located.data, postId])
 
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['post', postId],
@@ -267,6 +281,12 @@ export function PostDetailPage() {
     queryFn: () => getComments({ postId: postId!, page: commentPage, size: COMMENT_PAGE_SIZE, sort: commentSort }),
     enabled: isValidId(postId),
   })
+  useEffect(() => {
+    const id = searchParams.get('commentId')
+    if (id && located.data?.page === commentPage && comments?.records.some(comment => comment.id === id)) {
+      requestAnimationFrame(() => { window.location.hash = `comment-${id}`; document.getElementById(`comment-${id}`)?.scrollIntoView({ block: 'center' }) })
+    }
+  }, [comments, located.data, commentPage, searchParams])
 
   const {
     liked,
@@ -282,11 +302,13 @@ export function PostDetailPage() {
     mutationFn: () => createComment({
       postId: postId!,
       parentId: replyTo?.id,
-      content: content.trim(),
+      content,
+      mentions,
     }),
     onSuccess: () => {
       toast('评论发表成功')
       setContent('')
+      setMentions([])
       setReplyTo(null)
       queryClient.invalidateQueries({ queryKey: ['comments', postId] })
       queryClient.invalidateQueries({ queryKey: ['post', postId] })
@@ -392,6 +414,7 @@ export function PostDetailPage() {
             <div
               className="mt-4 break-words text-[15px] leading-8 text-text [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:bg-muted [&_blockquote]:px-4 [&_blockquote]:py-3 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:leading-tight [&_h1]:text-text [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:leading-tight [&_h2]:text-text [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text [&_img]:my-3 [&_img]:h-auto [&_img]:w-full [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: post.content }}
+              onClick={(event) => { const mention = (event.target as HTMLElement).closest('span[data-type="mention"]'); const id = mention?.getAttribute('data-id'); if (id && isValidId(id)) navigate(`/users/${id}`) }}
             />
 
             <footer className="mt-10 flex flex-wrap items-center justify-center gap-4 py-4">
@@ -461,12 +484,12 @@ export function PostDetailPage() {
                       </button>
                     </div>
                   )}
-                  <Textarea
-                    aria-label="发表评论"
+                  <MentionTextarea
                     placeholder={replyTo ? `回复 ${replyTo.userNickname}...` : '写下你的评论...'}
                     value={content}
-                    onChange={(event) => setContent(event.target.value)}
-                    className="min-h-28 border-primary/50 focus:border-primary"
+                    onChange={setContent}
+                    mentions={mentions}
+                    onMentionsChange={setMentions}
                   />
                   <div className="mt-3 flex justify-end">
                     <Button

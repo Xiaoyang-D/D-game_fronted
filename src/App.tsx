@@ -31,6 +31,7 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
 import { AssistantProvider } from '@/components/assistant/AssistantProvider'
 import { AssistantPage } from '@/pages/assistant/AssistantPage'
+import { MessageProvider } from '@/components/messages/MessageProvider'
 
 function CommunityRoute() {
   const [params] = useSearchParams()
@@ -73,6 +74,7 @@ export default function App() {
         <BrowserRouter>
           <AssistantProvider>
             <AppInitializer>
+              <MessageProvider>
               <Routes>
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />
@@ -140,6 +142,7 @@ export default function App() {
                 </Route>
               </Route>
               </Routes>
+              </MessageProvider>
             </AppInitializer>
           </AssistantProvider>
         </BrowserRouter>

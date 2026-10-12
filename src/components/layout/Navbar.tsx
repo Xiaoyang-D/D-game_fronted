@@ -4,7 +4,8 @@ import { Bell, ChevronDown, Gamepad2, MapPin, Menu, PenSquare, Settings, User, U
 import { useEffect, useRef, useState } from 'react'
 import { getGames } from '@/api/game'
 import { Pagination } from '@/components/ui/Pagination'
-import { getUnreadCount } from '@/api/notification'
+import { getUnreadSummary } from '@/api/message'
+import { useMessageConnection } from '@/components/messages/MessageProvider'
 import { useAuthStore } from '@/store/authStore'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { NavbarSearch } from '@/components/layout/NavbarSearch'
@@ -85,12 +86,14 @@ export function Navbar() {
     setMobileOpen(false)
   }
 
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: getUnreadCount,
+  const connected = useMessageConnection()
+  const { data: summary } = useQuery({
+    queryKey: ['message-summary'],
+    queryFn: getUnreadSummary,
     enabled: isAuthenticated,
-    refetchInterval: 30000,
+    refetchInterval: connected ? false : 30000,
   })
+  const unreadCount = summary?.total || 0
 
   const handleLogout = async () => {
     await logout()
@@ -167,7 +170,7 @@ export function Navbar() {
               <Link
                 to="/notifications"
                 className="relative flex items-center rounded-md p-2 text-white/65 transition-colors duration-200 hover:bg-white/8 hover:text-white cursor-pointer"
-                aria-label="通知"
+                aria-label="消息"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -278,7 +281,7 @@ export function Navbar() {
                   发帖
                 </NavLink>
                 <NavLink to="/notifications" onClick={() => setMobileOpen(false)} className="rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">
-                  通知 {unreadCount > 0 && `(${unreadCount})`}
+                  消息 {unreadCount > 0 && `(${unreadCount})`}
                 </NavLink>
                 <NavLink to={`/users/${user!.id}`} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/70 cursor-pointer">
                   <User className="h-4 w-4" /> 个人中心

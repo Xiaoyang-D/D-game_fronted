@@ -22,6 +22,7 @@ import {
 import { uploadFile } from '@/api/file'
 import { cn } from '@/lib/utils'
 import { plainTextLength } from '@/lib/richText'
+import { PostMention } from '@/lib/postMentions'
 import { useToast } from '@/components/ui/Toast'
 
 interface RichTextEditorProps {
@@ -54,6 +55,7 @@ export function RichTextEditor({ value, onChange, disabled, placeholder, maxLeng
       Placeholder.configure({ placeholder: placeholder || '' }),
       CharacterCount.configure({ limit: maxLength ?? null, mode: 'textSize' }),
       Underline,
+      PostMention,
     ],
     content: value || '<p></p>',
     editable: !disabled,

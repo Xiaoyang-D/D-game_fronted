@@ -63,6 +63,11 @@
   animation: nav-sections-reveal 160ms ease-out;
 }
 
+.user-mention {
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
 /* Keep the community header and three columns on the same centered rail. */
 .community-shell,
 .community-navbar {

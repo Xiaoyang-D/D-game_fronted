@@ -42,3 +42,6 @@ secrets/
 *.p12
 *.jks
 *.keystore
+
+# Local documentation
+docs/

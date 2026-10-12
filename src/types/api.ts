@@ -193,6 +193,7 @@ export interface PostManagePageResp {
 }
 
 export interface UserProfileResp {
+  isFriend?: boolean
   id: Id
   nickname: string
   avatarUrl: string | null
@@ -241,6 +242,7 @@ export interface BannedAuthorPostsQuery {
 }
 
 export interface CommentResp {
+  mentions?: import('./messages').Mention[]
   id: Id
   postId: Id
   parentId: Id
@@ -255,6 +257,11 @@ export interface CommentResp {
 export type CommentSort = 'DEFAULT' | 'EARLIEST' | 'LATEST'
 
 export interface Notification {
+  isSilent?: number
+  senderNickname?: string
+  senderAvatarUrl?: string | null
+  targetUrl?: string | null
+  targetAvailable?: boolean
   id: Id
   receiverId: Id
   senderId: Id
@@ -349,6 +356,7 @@ export interface PostPublishReq {
 }
 
 export interface CreateCommentReq {
+  mentions?: import('./messages').Mention[]
   postId: Id
   parentId?: Id
   content: string
@@ -446,6 +454,7 @@ export interface CommentsQuery {
 }
 
 export interface NotificationsQuery {
+  category?: import('./messages').NotificationCategory
   page?: number
   size?: number
 }

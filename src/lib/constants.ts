@@ -17,6 +17,8 @@ export const NOTIFICATION_TYPE = {
   FOLLOW: 3,
   SYSTEM: 4,
   AUDIT: 5,
+  MENTION: 6,
+  FRIEND: 7,
 } as const
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'

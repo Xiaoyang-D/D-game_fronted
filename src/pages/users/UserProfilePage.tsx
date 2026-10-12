@@ -5,6 +5,7 @@ import { CalendarDays, Heart, PenSquare, ThumbsUp, UserRoundPlus, Users, Gamepad
 import heroImage from '@/assets/hero.png'
 import { getPosts } from '@/api/post'
 import { follow, unfollow } from '@/api/interaction'
+import { openConversation } from '@/api/message'
 import { getUserFavorites, getUserProfile } from '@/api/user'
 import { PostCard } from '@/components/community/PostCard'
 import { Avatar } from '@/components/ui/Avatar'
@@ -153,6 +154,7 @@ export function UserProfilePage() {
   })
 
   const activeTitle = useMemo(() => (tab === 'favorites' ? '收藏' : '发布'), [tab])
+  const chatMutation = useMutation({ mutationFn: () => openConversation(userId!), onSuccess: conversation => navigate(`/notifications?tab=chats&conversation=${conversation.id}`), onError: (error: Error) => toast(error.message, 'error') })
 
   const actionLabel = profile?.isSelf
     ? '编辑资料'
@@ -285,6 +287,7 @@ export function UserProfilePage() {
                 <ActionIcon className="h-4 w-4" />
                 {actionLabel}
               </Button>
+              {profile.isFriend && !profile.isSelf && <Button variant="outline" onClick={() => chatMutation.mutate()} loading={chatMutation.isPending}>好友 · 发消息</Button>}
             </div>
           </div>
 

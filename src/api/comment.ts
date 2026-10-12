@@ -12,3 +12,4 @@ export async function createComment(data: CreateCommentReq): Promise<Id> {
 export async function deleteComment(commentId: Id): Promise<void> {
   await api.delete<void>(`/comments/${commentId}`)
 }
+export const getCommentLocation = (commentId: Id) => api.get<{ postId: Id; commentId: Id; page: number }>(`/comments/${commentId}/location`, { params: { sort: 'DEFAULT', size: 20 } })
