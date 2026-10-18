@@ -18,6 +18,8 @@ import { Loading } from '@/components/ui/Loading'
 import { Pagination } from '@/components/ui/Pagination'
 import { useToast } from '@/components/ui/Toast'
 import { cn, formatDateTime } from '@/lib/utils'
+import { OptimizedImage } from '@/components/community/OptimizedImage'
+import { imageSource } from '@/lib/images'
 import type { PostManageItem, PostManageTab } from '@/types/api'
 
 const PAGE_SIZE = 10
@@ -177,7 +179,7 @@ function PostManagementRow({
     <article className="grid gap-4 py-5 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-center sm:gap-5">
       <button type="button" onClick={onEdit} className="aspect-[16/10] w-full overflow-hidden rounded-md bg-muted text-left sm:w-40">
         {imageSrc ? (
-          <img src={imageSrc} alt="" className="h-full w-full object-cover" />
+          <OptimizedImage originalUrl={imageSrc} source={imageSource(imageSrc, post.images, 'thumbnail')} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center text-text-secondary/35">
             <ImageOff className="h-8 w-8" />

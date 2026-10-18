@@ -15,7 +15,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import heroImage from '@/assets/hero.png'
-import { getGames } from '@/api/game'
+import { gameCatalogOptions } from '@/lib/gameCatalogQueries'
 import { getPosts } from '@/api/post'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
 import { PublishCard } from '@/components/community/PublishCard'
@@ -34,7 +34,7 @@ const toolLinks = [
   { to: '/profile', label: '个人中心', icon: Heart },
 ]
 
-interface HeroSlide {
+export interface HeroSlide {
   eyebrow: string
   title: string
   description: string
@@ -73,10 +73,7 @@ const defaultHeroSlides: HeroSlide[] = [
 
 export function HomePage() {
   const { isAuthenticated } = useAuthStore()
-  const { data: games, isLoading: gamesLoading } = useQuery({
-    staleTime: 0, queryKey: ['games', 'home'],
-    queryFn: () => getGames({ page: 1, size: 6 }),
-  })
+  const { data: games, isLoading: gamesLoading } = useQuery(gameCatalogOptions(1, 6))
 
   const { data: posts, isLoading: postsLoading } = useQuery({
     queryKey: ['posts', 'home'],
@@ -260,32 +257,48 @@ function buildHeroSlides(games: GameResp[] = []): HeroSlide[] {
   return gameSlides
 }
 
-function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
+export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [settledImages, setSettledImages] = useState<Set<string>>(() => new Set())
+  const currentIndex = activeIndex < slides.length ? activeIndex : 0
+  const activeImage = slides[currentIndex]?.image
+  const nextImage = slides[(currentIndex + 1) % slides.length]?.image
 
   useEffect(() => {
-    if (activeIndex >= slides.length) {
-      setActiveIndex(0)
+    if (!activeImage || !nextImage || activeImage === nextImage
+      || !settledImages.has(activeImage) || settledImages.has(nextImage)) return
+    // 等当前图片请求结束，再在空闲时预加载下一张，首屏不同时下载全部轮播图。
+    const preload = () => {
+      const image = new Image()
+      image.decoding = 'async'
+      image.fetchPriority = 'low'
+      image.src = nextImage
     }
-  }, [activeIndex, slides.length])
+    if (typeof window.requestIdleCallback === 'function') {
+      const handle = window.requestIdleCallback(preload, { timeout: 2000 })
+      return () => window.cancelIdleCallback(handle)
+    }
+    const timer = window.setTimeout(preload, 600)
+    return () => window.clearTimeout(timer)
+  }, [activeImage, nextImage, settledImages])
 
   useEffect(() => {
-    if (slides.length <= 1 || isPaused) return undefined
+    if (slides.length <= 1 || isPaused || !activeImage || !settledImages.has(activeImage)) return undefined
 
     const timer = window.setInterval(() => {
-      setActiveIndex((index) => (index + 1) % slides.length)
+      setActiveIndex((index) => ((index < slides.length ? index : 0) + 1) % slides.length)
     }, 5000)
 
     return () => window.clearInterval(timer)
-  }, [isPaused, slides.length])
+  }, [isPaused, slides.length, activeImage, settledImages])
 
   const goToPrevious = () => {
-    setActiveIndex((index) => (index + slides.length - 1) % slides.length)
+    setActiveIndex((currentIndex + slides.length - 1) % slides.length)
   }
 
   const goToNext = () => {
-    setActiveIndex((index) => (index + 1) % slides.length)
+    setActiveIndex((currentIndex + 1) % slides.length)
   }
 
   if (slides.length === 0) return null
@@ -300,7 +313,7 @@ function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
     >
       <div className="relative min-h-[318px] sm:min-h-[264px]">
         {slides.map((slide, index) => {
-          const isActive = index === activeIndex
+          const isActive = index === currentIndex
           return (
             <div
               key={`${slide.eyebrow}-${slide.title}`}
@@ -310,7 +323,13 @@ function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               )}
               aria-hidden={!isActive}
             >
-              <img src={slide.image} alt={slide.imageAlt} className="absolute inset-0 h-full w-full object-cover opacity-45" />
+              {(isActive || settledImages.has(slide.image)) && (
+                <img src={slide.image} alt={slide.imageAlt}
+                  loading="eager" decoding="async" fetchPriority={isActive ? 'high' : 'low'}
+                  onLoad={() => setSettledImages((settled) => settled.has(slide.image) ? settled : new Set([...settled, slide.image]))}
+                  onError={() => setSettledImages((settled) => settled.has(slide.image) ? settled : new Set([...settled, slide.image]))}
+                  className="absolute inset-0 h-full w-full object-cover opacity-45" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-r from-[#111418] via-[#111418]/80 to-[#111418]/20" />
               <div className="relative flex min-h-[318px] items-center px-6 py-8 pb-20 sm:min-h-[264px] sm:px-8 sm:pr-24">
                 <div className="max-w-lg">
@@ -355,7 +374,7 @@ function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 onClick={() => setActiveIndex(index)}
                 className={cn(
                   'h-2.5 rounded-full transition-all duration-200',
-                  index === activeIndex ? 'w-8 bg-primary' : 'w-2.5 bg-white/45 hover:bg-white/75',
+                  index === currentIndex ? 'w-8 bg-primary' : 'w-2.5 bg-white/45 hover:bg-white/75',
                 )}
               />
             ))}

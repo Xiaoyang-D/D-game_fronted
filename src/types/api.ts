@@ -100,6 +100,8 @@ export interface Board {
 }
 
 export interface PostResp {
+  excerpt?: string | null
+  images?: ImageVariantsResp[]
   id: Id
   boardId: Id
   boardName: string
@@ -110,6 +112,8 @@ export interface PostResp {
   authorUsername?: string
   authorAvatarUrl?: string | null
   authorStatus?: number
+  authorFollowing?: boolean | null
+  followingUserId?: Id | null
   title: string
   content: string
   status: number
@@ -157,6 +161,7 @@ export interface PostDraftResp {
 export type PostManageTab = 'published' | 'pending' | 'rejected' | 'draft'
 
 export interface PostManageItem {
+  images?: ImageVariantsResp[]
   id: Id
   boardId: Id | null
   boardName: string | null
@@ -209,6 +214,8 @@ export interface UserProfileResp {
 }
 
 export interface UserFavoriteResp {
+  excerpt?: string | null
+  images?: ImageVariantsResp[]
   targetType: number
   targetId: Id
   title: string
@@ -280,6 +287,8 @@ export interface FileResp {
   id: Id
   fileKey: string
   fileUrl: string
+  thumbnailUrl?: string
+  previewUrl?: string
   fileName: string
   fileSize: number
   contentType: string
@@ -469,4 +478,10 @@ export interface CheckInStatusResp {
 export interface CheckInResultResp {
   checkInDate: string
   streakDays: number
+}
+
+export interface ImageVariantsResp {
+  originalUrl: string
+  thumbnailUrl: string
+  previewUrl: string
 }

@@ -1,37 +1,39 @@
-import { useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import { BrowserRouter, Navigate, Routes, Route, useParams, useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/layout/Layout'
-import { AdminLayout } from '@/components/layout/AdminLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AdminRoute } from '@/components/auth/AdminRoute'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Loading } from '@/components/ui/Loading'
 import { useAuthStore } from '@/store/authStore'
 import { HomePage } from '@/pages/home/HomePage'
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { EmailAuthForm } from '@/pages/auth/EmailAuthForm'
-import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { CommunityPage } from '@/pages/community/CommunityPage'
-import { SearchResultsPage } from '@/pages/search/SearchResultsPage'
-import { PostDetailPage } from '@/pages/community/PostDetailPage'
-import { CreatePostPage } from '@/pages/community/CreatePostPage'
-import { PostManagementPage } from '@/pages/community/PostManagementPage'
-import { FollowingPage } from '@/pages/community/FollowingPage'
-import { UserProfilePage } from '@/pages/users/UserProfilePage'
-import { ProfilePage } from '@/pages/profile/ProfilePage'
-import { NotificationsPage } from '@/pages/notifications/NotificationsPage'
-import { AdminHomePage } from '@/pages/admin/AdminHomePage'
-import { GameSectionsPage } from '@/pages/admin/GameSectionsPage'
-import { AdminCreateGamePage } from '@/pages/admin/AdminCreateGamePage'
-import { AdminAuditPostPage } from '@/pages/admin/AdminAuditPostPage'
-import { AdminBannedPostsPage } from '@/pages/admin/AdminBannedPostsPage'
-import { AdminAuditCommentPage } from '@/pages/admin/AdminAuditCommentPage'
-import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
-import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
 import { AssistantProvider } from '@/components/assistant/AssistantProvider'
-import { AssistantPage } from '@/pages/assistant/AssistantPage'
 import { MessageProvider } from '@/components/messages/MessageProvider'
+
+// Keep the home page in the entry chunk; load other pages only when visited.
+const AdminLayout = lazy(() => import('@/components/layout/AdminLayout').then(m => ({ default: m.AdminLayout })))
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
+const EmailAuthForm = lazy(() => import('@/pages/auth/EmailAuthForm').then(m => ({ default: m.EmailAuthForm })))
+const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage })))
+const CommunityPage = lazy(() => import('@/pages/community/CommunityPage').then(m => ({ default: m.CommunityPage })))
+const SearchResultsPage = lazy(() => import('@/pages/search/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })))
+const PostDetailPage = lazy(() => import('@/pages/community/PostDetailPage').then(m => ({ default: m.PostDetailPage })))
+const CreatePostPage = lazy(() => import('@/pages/community/CreatePostPage').then(m => ({ default: m.CreatePostPage })))
+const PostManagementPage = lazy(() => import('@/pages/community/PostManagementPage').then(m => ({ default: m.PostManagementPage })))
+const FollowingPage = lazy(() => import('@/pages/community/FollowingPage').then(m => ({ default: m.FollowingPage })))
+const UserProfilePage = lazy(() => import('@/pages/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
+const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
+const AdminHomePage = lazy(() => import('@/pages/admin/AdminHomePage').then(m => ({ default: m.AdminHomePage })))
+const GameSectionsPage = lazy(() => import('@/pages/admin/GameSectionsPage').then(m => ({ default: m.GameSectionsPage })))
+const AdminCreateGamePage = lazy(() => import('@/pages/admin/AdminCreateGamePage').then(m => ({ default: m.AdminCreateGamePage })))
+const AdminAuditPostPage = lazy(() => import('@/pages/admin/AdminAuditPostPage').then(m => ({ default: m.AdminAuditPostPage })))
+const AdminBannedPostsPage = lazy(() => import('@/pages/admin/AdminBannedPostsPage').then(m => ({ default: m.AdminBannedPostsPage })))
+const AdminAuditCommentPage = lazy(() => import('@/pages/admin/AdminAuditCommentPage').then(m => ({ default: m.AdminAuditCommentPage })))
+const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })))
+const AdminReportsPage = lazy(() => import('@/pages/admin/AdminReportsPage').then(m => ({ default: m.AdminReportsPage })))
+const AssistantPage = lazy(() => import('@/pages/assistant/AssistantPage').then(m => ({ default: m.AssistantPage })))
 
 function CommunityRoute() {
   const [params] = useSearchParams()

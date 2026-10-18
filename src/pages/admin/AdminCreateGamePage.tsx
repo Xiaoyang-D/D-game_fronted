@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -25,6 +25,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export function AdminCreateGamePage() {
+  const queryClient = useQueryClient()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
@@ -59,6 +60,7 @@ export function AdminCreateGamePage() {
         releaseDate: data.releaseDate || undefined,
         tagIds,
       })
+      await queryClient.invalidateQueries({ queryKey: ['games'] })
       toast(`游戏创建成功，ID: ${gameId}`)
       reset()
     } catch (err) {

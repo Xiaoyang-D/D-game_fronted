@@ -25,6 +25,10 @@ export async function follow(followeeId: Id): Promise<void> {
   await api.post<void>(`/follows/${followeeId}`)
 }
 
+export async function getFollowStatus(followeeId: Id): Promise<boolean> {
+  return api.get<boolean>(`/follows/${followeeId}`)
+}
+
 export async function unfollow(followeeId: Id): Promise<void> {
   await api.delete<void>(`/follows/${followeeId}`)
 }

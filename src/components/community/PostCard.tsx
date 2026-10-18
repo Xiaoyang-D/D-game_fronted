@@ -4,6 +4,8 @@ import type { PostResp } from '@/types/api'
 import { CardFollowButton } from './CardFollowButton'
 import { Avatar } from '@/components/ui/Avatar'
 import { formatDateTime, cn } from '@/lib/utils'
+import { imageSource } from '@/lib/images'
+import { OptimizedImage } from './OptimizedImage'
 
 interface PostCardProps {
   post: PostResp
@@ -13,8 +15,8 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, className, badgeLabel, compact }: PostCardProps) {
-  const images = extractImages(post.content).slice(0, compact ? 5 : 2)
-  const excerpt = stripHtml(post.content)
+  const images = (post.images ? post.images.map(image => image.originalUrl) : extractImages(post.content)).slice(0, compact ? 5 : 2)
+  const excerpt = post.excerpt ?? stripHtml(post.content)
   const authorName = post.authorNickname || post.authorUsername || '用户'
 
   return (
@@ -51,7 +53,7 @@ export function PostCard({ post, className, badgeLabel, compact }: PostCardProps
             </span>
           )}
         </div>
-        <CardFollowButton authorId={post.userId} />
+        <CardFollowButton authorId={post.userId} authorStatus={post.authorStatus} initialFollowing={post.authorFollowing} followingUserId={post.followingUserId} />
       </header>
 
       <Link to={`/posts/${post.id}`} className="mt-4 block">
@@ -59,9 +61,12 @@ export function PostCard({ post, className, badgeLabel, compact }: PostCardProps
           <div className="flex items-start gap-3 overflow-hidden">
             {images.map((src) => (
               <div key={src} className={cn('min-w-0 overflow-hidden rounded-md', compact ? 'shrink-0' : images.length > 1 ? 'max-w-[calc(50%-6px)]' : 'max-w-full')}>
-                <img
-                  src={src}
+                <OptimizedImage
+                  originalUrl={src}
+                  source={imageSource(src, post.images, 'thumbnail')}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className={compact ? 'block h-auto max-h-40 w-auto max-w-32 object-contain' : 'block h-auto max-h-[360px] w-auto max-w-full object-contain sm:max-h-[400px]'}
                 />
               </div>

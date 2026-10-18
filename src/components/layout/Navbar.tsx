@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, ChevronDown, Gamepad2, MapPin, Menu, PenSquare, Settings, User, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { getGames } from '@/api/game'
+import { gameCatalogOptions } from '@/lib/gameCatalogQueries'
 import { Pagination } from '@/components/ui/Pagination'
 import { getUnreadSummary } from '@/api/message'
 import { useMessageConnection } from '@/components/messages/MessageProvider'
@@ -50,8 +50,7 @@ export function Navbar() {
   const sectionsActive = (location.pathname === '/community' || location.pathname === '/search' || /^\/posts\/[^/]+$/.test(location.pathname) && !['/posts/new', '/posts/manage', '/posts/drafts'].includes(location.pathname))
   const highlightedNav = hoveredNav ?? (sectionsOpen || sectionsActive ? 'sections' : location.pathname === '/' ? 'home' : null)
   const { data: games, isLoading: gamesLoading, isError: gamesError, refetch: reloadGames } = useQuery({
-    staleTime: 0, queryKey: ['nav-game-sections', gamesPage],
-    queryFn: () => getGames({ page: gamesPage, size: 12 }),
+    ...gameCatalogOptions(gamesPage, 12),
     enabled: sectionsOpen,
   })
 

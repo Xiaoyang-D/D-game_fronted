@@ -20,6 +20,7 @@ import { createComment, deleteComment, getComments, getCommentLocation } from '@
 import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
+import { PostContent } from '@/components/community/PostContent'
 import { getUserProfile } from '@/api/user'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
 import { Avatar } from '@/components/ui/Avatar'
@@ -150,6 +151,8 @@ function AuthorCard({ post }: { post: PostResp }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile', post.userId] })
+      queryClient.invalidateQueries({ queryKey: ['follow-status', post.userId] })
+      queryClient.invalidateQueries({ queryKey: ['posts', 'following'] })
     },
     onError: (error: Error) => toast(error.message, 'error'),
   })
@@ -411,9 +414,10 @@ export function PostDetailPage() {
               </div>
             </header>
 
-            <div
+            <PostContent
+              content={post.content}
+              images={post.images}
               className="mt-4 break-words text-[15px] leading-8 text-text [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:bg-muted [&_blockquote]:px-4 [&_blockquote]:py-3 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:leading-tight [&_h1]:text-text [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-black [&_h2]:leading-tight [&_h2]:text-text [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-text [&_img]:my-3 [&_img]:h-auto [&_img]:w-full [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
-              dangerouslySetInnerHTML={{ __html: post.content }}
               onClick={(event) => { const mention = (event.target as HTMLElement).closest('span[data-type="mention"]'); const id = mention?.getAttribute('data-id'); if (id && isValidId(id)) navigate(`/users/${id}`) }}
             />
 

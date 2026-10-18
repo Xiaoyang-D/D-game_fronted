@@ -2,9 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, Grid3X3, Search } from 'lucide-react'
-import { getGames } from '@/api/game'
+import { gameCatalogOptions } from '@/lib/gameCatalogQueries'
 
 export function NavbarSearch({ light = false }: { light?: boolean }) {
+  const { search } = useLocation()
+  return <NavbarSearchForm key={search} light={light} />
+}
+
+function NavbarSearchForm({ light }: { light: boolean }) {
   const root = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const location = useLocation()
@@ -12,15 +17,8 @@ export function NavbarSearch({ light = false }: { light?: boolean }) {
   const [input, setInput] = useState(params.get('keyword') || '')
   const [gameId, setGameId] = useState<string | undefined>(params.get('gameId') || undefined)
   const [scopeOpen, setScopeOpen] = useState(false)
-  const { data: gameList, isLoading, error, refetch } = useQuery({ staleTime: 0, queryKey: ['games', 'search-scopes'], queryFn: () => getGames({ page: 1, size: 100 }) })
-  useEffect(() => { if (scopeOpen) void refetch() }, [scopeOpen, refetch])
+  const { data: gameList, isLoading, error } = useQuery(gameCatalogOptions())
   const selectedGame = gameList?.records.find(game => String(game.id) === gameId)
-  useEffect(() => {
-    const next = new URLSearchParams(location.search)
-    setInput(next.get('keyword') || '')
-    setGameId(next.get('gameId') || undefined)
-    setScopeOpen(false)
-  }, [location.search])
   useEffect(() => {
     const close = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setScopeOpen(false) }
     document.addEventListener('pointerdown', close)

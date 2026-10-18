@@ -47,6 +47,8 @@ function toPostResp(item: UserFavoriteResp): PostResp {
     authorStatus: item.authorStatus || undefined,
     title: item.title,
     content: item.content || '',
+    excerpt: item.excerpt,
+    images: item.images,
     status: item.status || 2,
     viewCount: item.viewCount || 0,
     likeCount: item.likeCount || 0,
@@ -149,6 +151,8 @@ export function UserProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile', userId] })
+      queryClient.invalidateQueries({ queryKey: ['follow-status', userId] })
+      queryClient.invalidateQueries({ queryKey: ['posts', 'following'] })
     },
     onError: (err: Error) => toast(err.message, 'error'),
   })

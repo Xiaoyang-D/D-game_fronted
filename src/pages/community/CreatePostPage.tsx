@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Clock3, FileText, Plus, Search, Sparkles } from 'lucide-react'
-import { getGames } from '@/api/game'
+import { gameCatalogOptions } from '@/lib/gameCatalogQueries'
 import {
   getBoards,
   getDraft,
@@ -77,10 +77,7 @@ export function CreatePostPage() {
     staleTime: 0, queryKey: ['boards', gameId],
     queryFn: () => getBoards(gameId || undefined),
   })
-  const { data: games } = useQuery({
-    staleTime: 0, queryKey: ['games', 'post-options'],
-    queryFn: () => getGames({ page: 1, size: 100 }),
-  })
+  const { data: games } = useQuery(gameCatalogOptions())
   const { data: collections } = useQuery({
     queryKey: ['my-collections'],
     queryFn: getMyCollections,

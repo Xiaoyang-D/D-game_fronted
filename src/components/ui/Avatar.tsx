@@ -1,4 +1,6 @@
 import { User } from 'lucide-react'
+import { useState } from 'react'
+import { avatarSources } from '@/lib/avatars'
 import { cn } from '@/lib/utils'
 
 interface AvatarProps {
@@ -15,10 +17,20 @@ const sizes = {
 }
 
 export function Avatar({ src, alt = '用户头像', size = 'md', className }: AvatarProps) {
-  if (src) {
+  const [failedSource, setFailedSource] = useState<string>()
+  const [failedOriginal, setFailedOriginal] = useState<string>()
+  const { source, original } = avatarSources(src || '', size)
+  const displayed = failedSource === source ? original : source
+  if (src && failedOriginal !== original) {
     return (
       <img
-        src={src}
+        src={displayed}
+        loading="lazy"
+        decoding="async"
+        onError={() => {
+          if (displayed !== original) setFailedSource(source)
+          else setFailedOriginal(original)
+        }}
         alt={alt}
         className={cn('rounded-full object-cover border border-border', sizes[size], className)}
       />
