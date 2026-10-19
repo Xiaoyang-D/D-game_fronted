@@ -20,6 +20,8 @@ import { createComment, deleteComment, getComments, getCommentLocation } from '@
 import { follow, unfollow } from '@/api/interaction'
 import { getPost } from '@/api/post'
 import { createReport } from '@/api/report'
+import { getLatestModeration } from '@/api/moderation'
+import { MyModeratedComments } from '@/components/community/MyModeratedComments'
 import { PostContent } from '@/components/community/PostContent'
 import { getUserProfile } from '@/api/user'
 import { CheckInCard } from '@/components/checkIn/CheckInCard'
@@ -308,13 +310,17 @@ export function PostDetailPage() {
       content,
       mentions,
     }),
-    onSuccess: () => {
-      toast('评论发表成功')
+    onSuccess: async (commentId) => {
+      try {
+        const moderation = await getLatestModeration('COMMENT', commentId)
+        toast(moderation?.status === 'PENDING' ? '评论已提交审核，仅自己可见' : '评论发表成功')
+      } catch { toast('评论已提交，请查看审核状态') }
       setContent('')
       setMentions([])
       setReplyTo(null)
       queryClient.invalidateQueries({ queryKey: ['comments', postId] })
       queryClient.invalidateQueries({ queryKey: ['post', postId] })
+      await queryClient.invalidateQueries({ queryKey: ['my-moderated-comments', user?.id, postId] })
     },
     onError: (err: Error) => toast(err.message, 'error'),
   })
@@ -398,6 +404,12 @@ export function PostDetailPage() {
         </div>
       )}
       {post.status === CONTENT_STATUS.REJECTED && (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          该帖子未通过审核，可在发布管理中查看原因并修改后重新提交。
+          {isAuthor && <Link to={`/posts/new?postId=${post.id}`} className="ml-2 font-semibold underline">修改帖子</Link>}
+        </div>
+      )}
+      {post.status === CONTENT_STATUS.BANNED && (
         <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           该帖子已被管理员封禁，不对外展示。修改内容不会解除封禁，需要管理员解封。
         </div>
@@ -514,6 +526,7 @@ export function PostDetailPage() {
               </div>
             )}
 
+            <MyModeratedComments key={`${user?.id || 'guest'}-${post.id}`} postId={post.id} />
             <div className="mt-6">
               {commentsLoading ? (
                 <Loading text="加载评论..." />

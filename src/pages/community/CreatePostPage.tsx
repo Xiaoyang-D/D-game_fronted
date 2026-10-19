@@ -15,6 +15,9 @@ import {
   updateDraft,
 } from '@/api/post'
 import { createMyCollection, getMyCollections } from '@/api/user'
+import { getLatestModeration } from '@/api/moderation'
+import { managedPostCandidate, postSubmissionMessage } from '@/lib/moderation'
+import { ModerationNotice } from '@/components/community/ModerationNotice'
 import { RichTextEditor } from '@/components/community/RichTextEditor'
 import { Button } from '@/components/ui/Button'
 import { Empty } from '@/components/ui/Empty'
@@ -99,7 +102,7 @@ export function CreatePostPage() {
   })
 
   useEffect(() => {
-    const source = draft || managedPost
+    const source = draft || (managedPost && managedPostCandidate(managedPost))
     if (!source) return
     // Draft data arrives asynchronously; synchronize it into the controlled editor fields once loaded.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -114,6 +117,13 @@ export function CreatePostPage() {
     setScheduleEnabled(Boolean(source.scheduledPublishAt))
     setScheduledAt(source.scheduledPublishAt ? toShanghaiDateTimeInput(source.scheduledPublishAt) : '')
   }, [draft, managedPost])
+
+  const { data: draftModeration } = useQuery({
+    queryKey: ['post-draft-review', draftId],
+    queryFn: () => getLatestModeration('POST', draftId!),
+    enabled: isValidId(draftId),
+    staleTime: 0,
+  })
 
   const minScheduleAt = useMemo(() => toLocalDateTimeValue(new Date(scheduleBaseTime + 2 * 60 * 60 * 1000)), [scheduleBaseTime])
   const maxScheduleAt = useMemo(() => toLocalDateTimeValue(new Date(scheduleBaseTime + 15 * 24 * 60 * 60 * 1000)), [scheduleBaseTime])
@@ -145,14 +155,18 @@ export function CreatePostPage() {
 
   const publishMutation = useMutation({
     mutationFn: (request: PostPublishReq) => draftId ? publishDraft(draftId, request) : publishPost(request),
-    onSuccess: (postId) => {
+    onSuccess: async (postId) => {
       queryClient.invalidateQueries({ queryKey: ['post-drafts'] })
       queryClient.invalidateQueries({ queryKey: ['post-management'] })
+      let moderation
+      try { moderation = await getLatestModeration('POST', postId) }
+      catch { toast('提交已保存，请在发布管理中查看审核状态'); navigate('/posts/manage'); return }
+      toast(postSubmissionMessage(moderation, scheduleEnabled))
       if (scheduleEnabled) {
-        toast('定时发布已保存，到期后自动公开')
-        navigate('/posts/manage?tab=draft')
+        navigate(`/posts/manage?tab=${moderation?.status === 'PENDING' ? 'pending' : 'draft'}`)
+      } else if (moderation?.status === 'PENDING' || moderation?.status === 'REJECTED') {
+        navigate(`/posts/manage?tab=${moderation.status === 'PENDING' ? 'pending' : 'rejected'}`)
       } else {
-        toast('帖子已发布')
         navigate(`/posts/${postId}`)
       }
     },
@@ -161,11 +175,11 @@ export function CreatePostPage() {
 
   const managedUpdateMutation = useMutation({
     mutationFn: (request: PostPublishReq) => updateManagedPost(managedPostId!, request),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['post-management'] })
       queryClient.invalidateQueries({ queryKey: ['managed-post', managedPostId] })
-      toast('修改已保存，封禁状态不会因修改而解除')
-      navigate('/posts/manage')
+      toast(updated.status === 4 ? '修改已提交，封禁仍需管理员解除' : postSubmissionMessage(updated.moderation))
+      navigate(`/posts/manage?tab=${updated.status === 4 ? 'banned' : updated.moderation?.status === 'PENDING' ? 'pending' : updated.moderation?.status === 'REJECTED' ? 'rejected' : updated.status === 0 ? 'draft' : 'published'}`)
     },
     onError: (error: Error) => toast(error.message, 'error'),
   })
@@ -257,6 +271,8 @@ export function CreatePostPage() {
 
   return (
     <div className="mx-auto max-w-[1024px] px-4 py-8 sm:px-6 lg:px-8">
+      {managedPost && <div className="mb-5"><ModerationNotice moderation={managedPost.moderation} hasPublishedVersion={managedPost.hasPublishedVersion && managedPost.status !== 4} scheduledPublishAt={managedPost.scheduledPublishAt} /></div>}
+      {draftModeration && <div className="mb-5"><ModerationNotice moderation={draftModeration} scheduledPublishAt={draft?.scheduledPublishAt} /></div>}
       <header className="flex items-center justify-between border-b border-border pb-5">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">D-GAME COMMUNITY</p>
@@ -369,7 +385,7 @@ export function CreatePostPage() {
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
-          <p className="text-xs text-text-secondary">{managedPostId ? '修改后自动公开，已封禁帖子仍需管理员解封。' : '发布后自动公开展示。'}</p>
+          <p className="text-xs text-text-secondary">未命中规则时自动公开，命中后等待人工审核。修改待审期间保留原公开版本；封禁仍需管理员解封。</p>
           <div className="flex gap-3">
             {!managedPostId && <Button type="button" variant="outline" onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
               保存草稿

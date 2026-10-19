@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -14,6 +14,8 @@ import { Textarea } from '@/components/ui/Textarea'
 import { useToast } from '@/components/ui/Toast'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/utils'
+import { isEditableModeration, parseModerationCandidate } from '@/lib/moderation'
+import { ModerationNotice } from '@/components/community/ModerationNotice'
 
 const schema = z.object({
   nickname: z.string().trim().min(1, '请输入昵称').max(64, '昵称最多 64 个字符'),
@@ -23,7 +25,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export function ProfilePage() {
-  const { user, setUser } = useAuthStore()
+  const { user, setUser, fetchUser } = useAuthStore()
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -31,15 +33,19 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, reset, formState: { errors, isDirty } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       nickname: user?.nickname || user?.username || '',
-      mobile: user?.mobile || '', bio: user?.bio || '',
+      mobile: user?.mobile || '', bio: isEditableModeration(user?.bioModeration) ? parseModerationCandidate<{ bio: string }>(user?.bioModeration?.candidateJson).bio ?? user?.bio ?? '' : user?.bio || '',
     },
   })
   const nickname = watch('nickname')
   const bio = watch('bio')
+  useEffect(() => { void fetchUser() }, [fetchUser])
+  useEffect(() => {
+    if (user && !isDirty) reset({ nickname: user.nickname || user.username, mobile: user.mobile || '', bio: isEditableModeration(user.bioModeration) ? parseModerationCandidate<{ bio: string }>(user.bioModeration?.candidateJson).bio ?? user.bio : user.bio })
+  }, [user, isDirty, reset])
   const refreshProfile = () => queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] })
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +79,8 @@ export function ProfilePage() {
         : { nickname: data.nickname, bio: data.bio })
       setUser(updated)
       refreshProfile()
-      toast('设置已保存')
+      reset(data)
+      toast(!privacy && updated.bioModeration?.status === 'PENDING' ? '资料已保存，简介待审核；原公开简介保留' : '设置已保存')
     } catch (error) {
       toast(error instanceof Error ? error.message : '保存失败', 'error')
     } finally { setLoading(false) }
@@ -131,8 +138,10 @@ export function ProfilePage() {
                 <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-4">
                   <label htmlFor="settings-bio" className="text-sm font-semibold sm:pt-3 sm:text-right">个人简介</label>
                   <div>
+                    <div className="mb-3"><ModerationNotice moderation={user.bioModeration} hasPublishedVersion={Boolean(user.bio)} /></div>
                     <Textarea id="settings-bio" placeholder="写下你的个性签名…" rows={4} maxLength={500} error={errors.bio?.message} {...register('bio')} />
                     <p className="mt-2 text-right text-xs text-gray-300">{bio.length}/500</p>
+                    <p className="mt-2 text-xs leading-6 text-text-secondary">简介命中审核规则时需人工审核，审核期间保留原公开简介。</p>
                   </div>
                 </div>
               </div>

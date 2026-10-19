@@ -18,6 +18,8 @@ import { Loading } from '@/components/ui/Loading'
 import { Pagination } from '@/components/ui/Pagination'
 import { useToast } from '@/components/ui/Toast'
 import { cn, formatDateTime } from '@/lib/utils'
+import { managedPostCandidate } from '@/lib/moderation'
+import { ModerationNotice } from '@/components/community/ModerationNotice'
 import { OptimizedImage } from '@/components/community/OptimizedImage'
 import { imageSource } from '@/lib/images'
 import type { PostManageItem, PostManageTab } from '@/types/api'
@@ -25,10 +27,11 @@ import type { PostManageItem, PostManageTab } from '@/types/api'
 const PAGE_SIZE = 10
 
 // Keep the URL tab names independent from backend numeric status codes.
-const tabs: Array<{ key: PostManageTab; label: string; countKey: 'publishedCount' | 'pendingCount' | 'rejectedCount' | 'draftCount' }> = [
+const tabs: Array<{ key: PostManageTab; label: string; countKey: 'publishedCount' | 'pendingCount' | 'rejectedCount' | 'bannedCount' | 'draftCount' }> = [
   { key: 'published', label: '已发布', countKey: 'publishedCount' },
-  { key: 'pending', label: '历史待审核', countKey: 'pendingCount' },
-  { key: 'rejected', label: '已封禁', countKey: 'rejectedCount' },
+  { key: 'pending', label: '待审核', countKey: 'pendingCount' },
+  { key: 'rejected', label: '未通过', countKey: 'rejectedCount' },
+  { key: 'banned', label: '已封禁', countKey: 'bannedCount' },
   { key: 'draft', label: '草稿', countKey: 'draftCount' },
 ]
 
@@ -113,7 +116,7 @@ export function PostManagementPage() {
         </aside>
 
         <section className="min-w-0 rounded-lg bg-white px-5 py-4 shadow-sm sm:px-7 sm:py-5">
-          <div role="tablist" aria-label="发布状态" className="flex min-w-max gap-6 overflow-x-auto border-b border-border sm:gap-12">
+          <div role="tablist" aria-label="发布状态" className="flex gap-6 overflow-x-auto border-b border-border sm:gap-12">
             {tabs.map((item) => (
               <button
                 key={item.key}
@@ -136,7 +139,7 @@ export function PostManagementPage() {
               {data.records.map((post) => (
                 <PostManagementRow
                   key={post.id}
-                  post={post}
+                  post={managedPostCandidate(post)}
                   deleting={deletingId === post.id && deleteMutation.isPending}
                   onEdit={() => editPost(post)}
                   onDelete={() => removePost(post)}
@@ -196,12 +199,14 @@ function PostManagementRow({
           {post.boardName && <span>· {post.boardName}</span>}
           {post.gameName && <span>· {post.gameName}</span>}
         </div>
+        {post.status === 4 && <p className="mt-2 text-sm text-red-700">已被管理员封禁，修改内容不会解封。</p>}
+        {post.moderation && <div className="mt-3"><ModerationNotice moderation={post.moderation} hasPublishedVersion={post.hasPublishedVersion && post.status !== 4} scheduledPublishAt={post.scheduledPublishAt} /></div>}
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary">
           <Metric icon={Eye} value={post.viewCount} />
           <Metric icon={MessageCircle} value={post.commentCount} />
           <Metric icon={ThumbsUp} value={post.likeCount} />
           <Metric icon={Heart} value={post.favoriteCount} />
-          {isDraft && post.scheduledPublishAt && <span className="inline-flex items-center gap-1 text-primary">定时 {formatDateTime(post.scheduledPublishAt)}</span>}
+          {post.scheduledPublishAt && <span className="inline-flex items-center gap-1 text-primary">定时 {formatDateTime(post.scheduledPublishAt)}{post.status === 1 ? ' · 审核通过后发布' : ''}</span>}
         </div>
       </div>
 

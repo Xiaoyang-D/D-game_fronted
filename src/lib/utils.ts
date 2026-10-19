@@ -34,7 +34,9 @@ export function getContentStatusLabel(status: number): string {
     case CONTENT_STATUS.APPROVED:
       return '已通过'
     case CONTENT_STATUS.REJECTED:
-      return '已拒绝'
+      return '未通过'
+    case CONTENT_STATUS.BANNED:
+      return '已封禁'
     default:
       return '未知'
   }

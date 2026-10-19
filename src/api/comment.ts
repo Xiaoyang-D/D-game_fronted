@@ -12,4 +12,11 @@ export async function createComment(data: CreateCommentReq): Promise<Id> {
 export async function deleteComment(commentId: Id): Promise<void> {
   await api.delete<void>(`/comments/${commentId}`)
 }
+
+export const getMyModeratedComments = (params: { postId: Id; page: number; size: number }) =>
+  api.get<PageResult<CommentResp>>('/comments/mine', { params })
+
+export const updateModeratedComment = (commentId: Id, data: Pick<CreateCommentReq, 'content' | 'mentions'>) =>
+  api.put<Id>(`/comments/${commentId}`, data)
+
 export const getCommentLocation = (commentId: Id) => api.get<{ postId: Id; commentId: Id; page: number }>(`/comments/${commentId}/location`, { params: { sort: 'DEFAULT', size: 20 } })

@@ -1,6 +1,36 @@
 /** 后端雪花 ID，始终以字符串传递，禁止 Number() 转换 */
 export type Id = string
 
+export type ModerationTarget = 'POST' | 'COMMENT' | 'BIO'
+export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED' | 'CANCELLED'
+export interface ModerationView {
+  submissionId: Id
+  targetType: ModerationTarget
+  targetId: Id
+  status: ModerationStatus
+  reason: string | null
+  candidateJson: string
+  matchedWords: string[]
+  ruleVersion: number | string
+  manual: number
+  reviewedAt: string | null
+  submittedAt?: string | null
+  authorId?: Id
+}
+export interface ModerationDetail extends ModerationView {
+  checkUnavailable?: boolean
+  authorId: Id
+  publicSnapshotJson: string | null
+  currentMatchedWords: string[]
+  currentRuleVersion: number | string
+}
+export interface ModerationRule {
+  id: Id
+  word: string
+  category: string
+  enabled: boolean
+}
+
 export interface Result<T> {
   code: number
   message: string
@@ -23,6 +53,7 @@ export interface TokenResp {
 }
 
 export interface UserResp {
+  bioModeration?: ModerationView | null
   id: Id
   username: string
   nickname: string
@@ -158,10 +189,12 @@ export interface PostDraftResp {
   gmtModified: string
 }
 
-export type PostManageTab = 'published' | 'pending' | 'rejected' | 'draft'
+export type PostManageTab = 'published' | 'pending' | 'rejected' | 'banned' | 'draft'
 
 export interface PostManageItem {
   images?: ImageVariantsResp[]
+  moderation?: ModerationView | null
+  hasPublishedVersion?: boolean
   id: Id
   boardId: Id | null
   boardName: string | null
@@ -171,7 +204,7 @@ export interface PostManageItem {
   collectionName: string | null
   title: string
   content: string
-  /** 0 draft, 1 pending, 2 approved, 3 rejected. */
+  /** 0 draft, 1 pending, 2 approved, 3 rejected, 4 administratively banned. */
   status: number
   isOriginal: boolean
   containsAiGenerated: boolean
@@ -190,6 +223,7 @@ export interface PostManagePageResp {
   publishedCount: number
   pendingCount: number
   rejectedCount: number
+  bannedCount?: number
   draftCount: number
   page: number
   size: number
@@ -249,6 +283,8 @@ export interface BannedAuthorPostsQuery {
 }
 
 export interface CommentResp {
+  status?: number
+  moderation?: ModerationView | null
   mentions?: import('./messages').Mention[]
   id: Id
   postId: Id

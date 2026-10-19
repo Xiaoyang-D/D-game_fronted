@@ -9,6 +9,7 @@ export const CONTENT_STATUS = {
   PENDING: 1,
   APPROVED: 2,
   REJECTED: 3,
+  BANNED: 4,
 } as const
 
 export const NOTIFICATION_TYPE = {

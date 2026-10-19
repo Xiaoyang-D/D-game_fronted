@@ -30,7 +30,8 @@ const GameSectionsPage = lazy(() => import('@/pages/admin/GameSectionsPage').the
 const AdminCreateGamePage = lazy(() => import('@/pages/admin/AdminCreateGamePage').then(m => ({ default: m.AdminCreateGamePage })))
 const AdminAuditPostPage = lazy(() => import('@/pages/admin/AdminAuditPostPage').then(m => ({ default: m.AdminAuditPostPage })))
 const AdminBannedPostsPage = lazy(() => import('@/pages/admin/AdminBannedPostsPage').then(m => ({ default: m.AdminBannedPostsPage })))
-const AdminAuditCommentPage = lazy(() => import('@/pages/admin/AdminAuditCommentPage').then(m => ({ default: m.AdminAuditCommentPage })))
+const AdminModerationPage = lazy(() => import('@/pages/admin/AdminModerationPage').then(m => ({ default: m.AdminModerationPage })))
+const AdminModerationRulesPage = lazy(() => import('@/pages/admin/AdminModerationRulesPage').then(m => ({ default: m.AdminModerationRulesPage })))
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })))
 const AdminReportsPage = lazy(() => import('@/pages/admin/AdminReportsPage').then(m => ({ default: m.AdminReportsPage })))
 const AssistantPage = lazy(() => import('@/pages/assistant/AssistantPage').then(m => ({ default: m.AssistantPage })))
@@ -138,7 +139,9 @@ export default function App() {
                   <Route path="games/new" element={<AdminCreateGamePage />} />
                   <Route path="posts" element={<AdminAuditPostPage />} />
                   <Route path="posts/banned" element={<AdminBannedPostsPage />} />
-                  <Route path="comments" element={<AdminAuditCommentPage />} />
+                  <Route path="comments" element={<Navigate to="/admin/moderation?targetType=COMMENT" replace />} />
+                  <Route path="moderation" element={<AdminModerationPage />} />
+                  <Route path="moderation/rules" element={<AdminModerationRulesPage />} />
                   <Route path="users" element={<AdminUsersPage />} />
                   <Route path="reports" element={<AdminReportsPage />} />
                 </Route>

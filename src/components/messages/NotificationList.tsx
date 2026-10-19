@@ -28,7 +28,7 @@ export function NotificationList({ category }: { category: NotificationCategory 
         else if (notification.targetUrl) navigate(notification.targetUrl)
       }} className="flex w-full items-start gap-3 border-b border-gray-100 py-5 text-left hover:bg-gray-50">
         <Avatar src={notification.senderAvatarUrl} alt={notification.senderNickname || '通知'} size="md" />
-        <div className="min-w-0 flex-1"><p className="font-medium text-gray-800">{notification.senderNickname || notification.title}<span className="ml-2 text-xs font-normal text-gray-400">{notification.senderNickname ? notification.title : ''}</span></p><p className="mt-2 text-sm text-gray-600">{notification.targetAvailable === false ? '内容已删除或暂不可见' : notification.content}</p><p className="mt-2 text-xs text-gray-400">{formatDateTime(notification.gmtCreate)}</p></div>
+        <div className="min-w-0 flex-1"><p className="font-medium text-gray-800">{notification.senderNickname || notification.title}<span className="ml-2 text-xs font-normal text-gray-400">{notification.senderNickname ? notification.title : ''}</span></p><p className="mt-2 whitespace-pre-wrap text-sm text-gray-600">{notification.content}</p>{notification.targetAvailable === false && <p className="mt-1 text-xs text-gray-400">关联内容已删除或暂不可见</p>}<p className="mt-2 text-xs text-gray-400">{formatDateTime(notification.gmtCreate)}</p></div>
         {notification.isRead === 0 && notification.isSilent !== 1 && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
       </button>)}
       <Pagination page={page} size={15} total={query.data.total} onChange={setPage} />

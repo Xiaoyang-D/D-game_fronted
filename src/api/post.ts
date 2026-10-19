@@ -71,6 +71,7 @@ const manageStatusByTab: Record<PostManageTab, string> = {
   published: 'APPROVED',
   pending: 'PENDING',
   rejected: 'REJECTED',
+  banned: 'BANNED',
   draft: 'DRAFT',
 }
 
@@ -86,7 +87,7 @@ export async function getManagedPost(id: Id): Promise<PostManageItem> {
   return api.get<PostManageItem>(`/posts/manage/${id}`)
 }
 
-/** Submit a management edit; submitted posts become pending again on the server. */
+/** Submit a candidate edit; clean text passes immediately and rule matches await review. */
 export async function updateManagedPost(id: Id, data: PostPublishReq): Promise<PostManageItem> {
   return api.put<PostManageItem>(`/posts/manage/${id}`, data)
 }

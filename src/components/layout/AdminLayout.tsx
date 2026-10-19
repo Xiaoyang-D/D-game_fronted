@@ -7,7 +7,8 @@ const adminLinks = [
   { to: '/admin/game-sections', label: '版区管理', icon: Gamepad2 },
   { to: '/admin/posts', label: '帖子管理', icon: MessageSquare },
   { to: '/admin/posts/banned', label: '封禁作者帖子', icon: UserX },
-  { to: '/admin/comments', label: '评论审核', icon: MessagesSquare },
+  { to: '/admin/moderation', label: '内容审核', icon: MessagesSquare, end: true },
+  { to: '/admin/moderation/rules', label: '审核规则词', icon: Shield },
   { to: '/admin/users', label: '用户管理', icon: Users },
 ]
 

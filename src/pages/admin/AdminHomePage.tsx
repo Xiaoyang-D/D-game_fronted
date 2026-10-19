@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/Card'
 const adminCards = [
   { to: '/admin/games/new', label: '创建游戏', desc: '添加新游戏到游戏库', icon: Gamepad2 },
   { to: '/admin/posts', label: '帖子管理', desc: '封禁或解封用户发表的帖子', icon: MessageSquare },
-  { to: '/admin/comments', label: '评论审核', desc: '审核用户发表的评论', icon: MessagesSquare },
+  { to: '/admin/moderation', label: '内容审核', desc: '审核帖子、评论、回复与个人简介', icon: MessagesSquare },
+  { to: '/admin/moderation/rules', label: '审核规则词', desc: '管理即时生效的内容审核规则', icon: Shield },
   { to: '/admin/users', label: '用户管理', desc: '封禁/解封用户，分配角色', icon: Users },
 ]
 
